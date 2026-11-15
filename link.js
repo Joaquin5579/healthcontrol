@@ -125,6 +125,14 @@
       const prev = link.lastCodes[i];
       if (prev !== undefined && d.code !== prev && d.level !== "nominal") {
         enqueue({ dir: "out", type: "alerta", auto: true, crew: i, title: d.title, text: `ALERTA AUTOMÁTICA · ${crewName(i)}: ${d.title}. ${d.desc}` });
+        // La tripulación no espera: la IA de a bordo indica qué hacer mientras llega la respuesta
+        if (typeof aiAnswer === "function" && cs.ai) {
+          const wait = oneWay() * 2 + HOUSTON_PROCESSING_S;
+          aiLog.push({ role: "ai", crew: i, html: aiAnswer("accion", i),
+            tag: `${escapeHtml(crewName(i))} · ALERTA ENVIADA A HOUSTON (respuesta en ~${fmtDur(wait)}) · MIENTRAS TANTO:` });
+          if (aiLog.length > 40) aiLog.shift();
+          renderAi();
+        }
       }
       link.lastCodes[i] = d.code;
     });
@@ -245,6 +253,7 @@
     renderStats();
     renderMessages();
     renderBadge();
+    renderAi();
   }
 
   // ---------- Diagrama animado Tierra ↔ nave ----------
@@ -335,6 +344,152 @@
   function linkLoop() { drawLink(); requestAnimationFrame(linkLoop); }
   requestAnimationFrame(linkLoop);
 
+  // =====================================================================
+  //  IA DE A BORDO: la tripulación la consulta sola mientras espera a la Tierra
+  //  (usa el mismo asistente clínico de la pestaña "IA Clínica", sin conexión)
+  // =====================================================================
+  const aiUi = { chat: $("linkAiChat"), chips: $("linkAiChips"), form: $("linkAiForm"), text: $("linkAiText"), wait: $("linkAiWait") };
+  const aiLog = [];
+  const AI_CHIPS = [
+    ["¿Cómo está en general?", "resumen"], ["¿Puede hacer tareas críticas?", "apto"], ["¿Qué hacemos ahora?", "accion"],
+    ["¿Cómo está su sueño?", "sueno"], ["¿Cuál es su mayor riesgo?", "riesgo"], ["¿Qué pasará en las próximas semanas?", "futuro"]
+  ];
+  const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+  // Respuestas sobre un órgano o tema puntual, con los datos actuales del tripulante
+  function topicAnswer(t, i) {
+    const cs = state.crewStates[i];
+    if (!cs || !cs.ai) return null;
+    const v = cs.vitals;
+    const name = escapeHtml(crewFirstName(i));
+    const pred = key => cs.ai.preds.find(p => p.title.startsWith(key));
+    const row = key => cs.ai.rows.find(r => r.metric.key === key);
+    const cmHint = ids => window.CM ? ` Contramedidas a bordo: <b>${ids.map(id => CM.LIST[id].icon + " " + CM.LIST[id].name).join("</b>, <b>")}</b> (pestaña Modelo Anatómico).` : "";
+    if (/hueso|oseo|osea|fractur|calcio/.test(t)) {
+      const p = pred("Densidad");
+      return `Densidad ósea de ${name}: <b>${formatDelta(v.boneDelta)}%</b> (límite -3%). ${p ? p.detail : ""}${cmHint(["ared", "calcio", "bisfo"])}`;
+    }
+    if (/musc|fuerza|atrofi/.test(t)) {
+      const p = pred("Masa");
+      return `Masa muscular de ${name}: <b>${formatDelta(v.muscleDelta)}%</b> (límite -5%). ${p ? p.detail : ""}${cmHint(["ared", "plan"])}`;
+    }
+    if (/ojo|vision|ver |vista|sans|ocular/.test(t)) {
+      const r = row("iop");
+      return `Presión ocular de ${name}: <b>${v.iop.toFixed(1)} mmHg</b> (límite 21; lo habitual en ${name} es ${r ? r.mean.toFixed(1) : "—"}).` +
+        (v.iop > 20 ? " Está alta: conviene hacer una sesión LBNP y revisar la vista." : " Está dentro de lo normal.") + cmHint(["lbnp"]);
+    }
+    if (/radiac|tormenta|solar|dosis/.test(t)) {
+      const p = pred("Dosis");
+      return `Radiación de ${name}: <b>${v.radRate.toFixed(1)} µSv/h</b> ahora y <b>${v.radTotal.toFixed(1)} mSv</b> acumulados. ${p ? "Llegaría al límite de 600 mSv en " + p.value + "." : ""}` +
+        (cs.solarExposure ? " <b>Hay tormenta solar: debe quedarse en el refugio blindado.</b>" : "");
+    }
+    if (/corazon|pulso|latido|presion arterial|taquic/.test(t)) {
+      return `Corazón de ${name}: <b>${v.hr} lpm</b> y presión <b>${v.sys}/${v.dia} mmHg</b>.` +
+        (cs.diagnosis.cardStates.hrStatus !== "nominal" ? " El pulso está fuera de rango: reposo, hidratación y ECG si sigue igual." : " Dentro de lo esperado para su actividad.");
+    }
+    if (/rinon|calculo|orina|agua|hidrat/.test(t)) {
+      return `Riñones de ${name}: el riesgo de cálculos sube cuando se pierde hueso (ahora ${formatDelta(v.boneDelta)}%). Debe beber al menos 2,5 L de agua por día.${cmHint(["hidratacion"])}`;
+    }
+    if (/triste|anim|estres|ansie|solo|aislad|famil|extra|deprim|motiv/.test(t)) {
+      return `Bienestar de ${name}: <b>${cs.psychScore}/100</b>. El aislamiento y la distancia con la Tierra pesan, sobre todo en la mitad de la misión.` +
+        `<ul><li>Agendar una videollamada con su familia.</li><li>Darle tareas que le gusten y le den sentido.</li><li>Cuidar el sueño y los horarios.</li></ul>${cmHint(["videollamada", "descanso"])}`;
+    }
+    if (/co2|aire|respir|oxigen/.test(t)) {
+      return `Respiración de ${name}: <b>${v.rr} rpm</b>, oxígeno <b>${v.spo2}%</b>, CO₂ del camarote <b>${(cs.localCo2 || 2.8).toFixed(1)} mmHg</b> (límite 4).` +
+        ((cs.localCo2 || 2.8) > 4 ? " El CO₂ está alto: ventilación del camarote al máximo." : " Todo dentro de lo normal.");
+    }
+    return null;
+  }
+  function crewFirstName(i) {
+    return (typeof crewIdentities !== "undefined" && crewIdentities[i]) ? crewIdentities[i].nombre : crewName(i);
+  }
+  function intentOf(t) {
+    if (/dorm|suen|descans|cansad|fatig|insomn/.test(t)) return "sueno";
+    if (/eva|caminata|apto|tarea|pilot|trabaj|puede salir/.test(t)) return "apto";
+    if (/riesgo|peligro|grave|preocup/.test(t)) return "riesgo";
+    if (/futuro|semana|predic|proxim|va a pasar|despues/.test(t)) return "futuro";
+    if (/hacer|hago|tratamiento|contramedida|ayuda|recomend|solucion/.test(t)) return "accion";
+    return "resumen";
+  }
+  // Responde una pregunta escrita: primero por tema (hueso, ojo, ánimo...), si no, por intención
+  function answerQuestion(text, i) {
+    const t = norm(text);
+    const topic = topicAnswer(t, i);
+    if (topic) return topic;
+    return typeof aiAnswer === "function" ? aiAnswer(intentOf(t), i) : "La IA todavía se está calibrando.";
+  }
+
+  function pendingFor(i) {
+    // Respuestas de la Tierra que todavía no llegaron para este tripulante
+    const now = link.clock;
+    return link.messages.filter(m => m.crew === i && ((m.dir === "out" && !m.replied) || (m.dir === "in" && now < m.arriveAt)))
+      .map(m => (m.dir === "out" ? m.arriveAt + oneWay() + HOUSTON_PROCESSING_S : m.arriveAt) - now)
+      .filter(s => s > 0);
+  }
+
+  function aiPush(role, html, extra = {}) {
+    aiLog.push({ role, html, crew: Number(ui.crew.value || 0), ...extra });
+    if (aiLog.length > 40) aiLog.shift();
+    renderAi();
+  }
+  function aiAsk(question, i, tag) {
+    aiPush("user", escapeHtml(question));
+    aiLog.push({ role: "ai", typing: true });
+    renderAi();
+    setTimeout(() => {
+      aiLog.pop();
+      const t0 = performance.now();
+      const html = answerQuestion(question, i);
+      aiPush("ai", html, { tag, ms: Math.max(1, Math.round(performance.now() - t0)) });
+    }, 420);
+  }
+
+  function renderAi() {
+    const i = Number(ui.crew.value || 0);
+    const pend = pendingFor(i);
+    if (pend.length) {
+      aiUi.wait.textContent = `⏳ Houston responde en ${fmtDur(Math.min(...pend))}`;
+      aiUi.wait.className = "link-ai-wait pending";
+    } else {
+      aiUi.wait.textContent = "Sin respuestas pendientes de la Tierra";
+      aiUi.wait.className = "link-ai-wait";
+    }
+    if (!aiLog.length) {
+      aiUi.chat.innerHTML = `<div class="link-ai-empty">La respuesta de la Tierra tarda.<br>Mientras tanto, pregúntenle a la IA de a bordo: responde <b>al instante</b> y <b>sin conexión</b>.</div>`;
+      return;
+    }
+    aiUi.chat.innerHTML = aiLog.map(m => {
+      if (m.typing) return `<div class="lai-msg ai"><span class="lai-avatar">IA</span><div class="lai-bubble"><span class="ai-typing"><i></i><i></i><i></i></span></div></div>`;
+      if (m.role === "user") return `<div class="lai-msg user"><div class="lai-bubble">${m.html}</div></div>`;
+      return `<div class="lai-msg ai"><span class="lai-avatar">IA</span><div class="lai-bubble">${m.tag ? `<span class="lai-tag">${m.tag}</span><br>` : ""}${m.html}${m.ms ? `<span class="lai-meta">Respondido a bordo en ${m.ms} ms · sin esperar a la Tierra</span>` : ""}</div></div>`;
+    }).join("");
+    aiUi.chat.scrollTop = aiUi.chat.scrollHeight;
+  }
+
+  aiUi.chips.innerHTML = AI_CHIPS.map(([q, id]) => `<button type="button" data-q="${id}">${q}</button>`).join("");
+  aiUi.chips.addEventListener("click", e => {
+    const b = e.target.closest("[data-q]");
+    if (!b) return;
+    const i = Number(ui.crew.value || 0);
+    aiPush("user", escapeHtml(b.textContent));
+    aiLog.push({ role: "ai", typing: true });
+    renderAi();
+    setTimeout(() => {
+      aiLog.pop();
+      const t0 = performance.now();
+      const html = typeof aiAnswer === "function" ? aiAnswer(b.dataset.q, i) : "—";
+      aiPush("ai", html, { ms: Math.max(1, Math.round(performance.now() - t0)) });
+    }, 420);
+  });
+  aiUi.form.addEventListener("submit", e => {
+    e.preventDefault();
+    const q = aiUi.text.value.trim();
+    if (!q) { aiUi.text.focus(); return; }
+    aiUi.text.value = "";
+    aiAsk(q, Number(ui.crew.value || 0));
+  });
+  ui.crew.addEventListener("change", renderAi);
+
   // ---------- Eventos ----------
   ui.destSeg.addEventListener("click", e => {
     const b = e.target.closest("[data-dest]");
@@ -360,9 +515,15 @@
     const text = ui.text.value.trim();
     if (!text) { ui.text.focus(); return; }
     const crew = Number(ui.crew.value || 0);
-    enqueue({ dir: "out", type: ui.type.value, crew, text });
+    const type = ui.type.value;
+    enqueue({ dir: "out", type, crew, text });
     if (typeof addLog === "function") addLog(CREW_PROFILES[crew].id, `Mensaje enviado a la Tierra (llega en ${fmtDur(oneWay())}).`, "info");
     ui.text.value = "";
+    // Mientras Houston responde, la IA de a bordo da una respuesta preliminar al instante
+    if (type === "consulta" || type === "reporte") {
+      const wait = oneWay() * 2 + HOUSTON_PROCESSING_S;
+      aiAsk(text, crew, `RESPUESTA PRELIMINAR · Houston responderá en ~${fmtDur(wait)}`);
+    }
     renderLinkView();
     ui.messages.scrollTop = ui.messages.scrollHeight;
   });

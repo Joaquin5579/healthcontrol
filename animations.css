@@ -1,0 +1,128 @@
+/* =========================================================
+   ANIMACIONES DEL SCADA
+   Archivo aparte: no modifica ningún estilo existente.
+   Si el sistema operativo pide "reducir movimiento", se apagan.
+   ========================================================= */
+
+/* ---------- Avisos emergentes (toasts) ---------- */
+.anim-toasts {
+  position: fixed;
+  top: 62px;
+  right: 14px;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(360px, calc(100vw - 28px));
+  pointer-events: none;
+}
+.anim-toast {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--blue-500);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 28px rgba(11, 37, 69, 0.22);
+  color: var(--navy-800);
+  cursor: pointer;
+  animation: toastIn 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+.anim-toast.out { animation: toastOut 0.35s ease-in both; }
+.anim-toast.warning { border-left-color: var(--warning); }
+.anim-toast.critical { border-left-color: var(--critical); }
+.anim-toast.success { border-left-color: var(--nominal); }
+.anim-toast.ai { border-left-color: #7b6cf6; }
+.anim-toast.comm { border-left-color: #14b8a6; }
+.anim-toast-icon {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  background: var(--blue-100);
+}
+.anim-toast.warning .anim-toast-icon { background: var(--warning-bg); animation: iconShake 0.6s ease 0.3s 2; }
+.anim-toast.critical .anim-toast-icon { background: var(--critical-bg); animation: iconShake 0.5s ease 0.3s 3; }
+.anim-toast.success .anim-toast-icon { background: var(--nominal-bg); animation: iconPop 0.6s ease 0.2s; }
+.anim-toast.ai .anim-toast-icon { background: #eeebff; }
+.anim-toast.comm .anim-toast-icon { background: #e2f8f5; }
+.anim-toast-body { min-width: 0; flex: 1; }
+.anim-toast-title { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.3px; }
+.anim-toast-text { font-size: 0.7rem; color: var(--text-dim); line-height: 1.35; margin-top: 2px; }
+.anim-toast-bar { height: 3px; border-radius: 2px; background: var(--blue-100); margin-top: 7px; overflow: hidden; }
+.anim-toast-bar > i { display: block; height: 100%; background: currentColor; opacity: 0.45; animation: toastTimer linear forwards; }
+.anim-toast.warning .anim-toast-bar > i { background: var(--warning); }
+.anim-toast.critical .anim-toast-bar > i { background: var(--critical); }
+.anim-toast.success .anim-toast-bar > i { background: var(--nominal); }
+.anim-toast.ai .anim-toast-bar > i { background: #7b6cf6; }
+.anim-toast.comm .anim-toast-bar > i { background: #14b8a6; }
+
+@keyframes toastIn { from { opacity: 0; transform: translateX(110%) scale(0.95); } to { opacity: 1; transform: none; } }
+@keyframes toastOut { to { opacity: 0; transform: translateX(110%); } }
+@keyframes toastTimer { from { width: 100%; } to { width: 0%; } }
+@keyframes iconShake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+@keyframes iconPop { 0% { transform: scale(0.6); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+/* ---------- Destello en los bordes de la pantalla al llegar una alarma ---------- */
+.anim-vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 1400; opacity: 0;
+}
+.anim-vignette.warning { box-shadow: inset 0 0 90px 10px rgba(217, 138, 6, 0.55); animation: vignette 1.6s ease-out; }
+.anim-vignette.critical { box-shadow: inset 0 0 110px 16px rgba(217, 45, 45, 0.6); animation: vignette 1.2s ease-out 2; }
+@keyframes vignette { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- Transición al cambiar de pestaña ---------- */
+.anim-view-enter > .panel { animation: viewIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.anim-view-enter > .panel:nth-child(2) { animation-delay: 0.08s; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Tarjetas que "saltan" al cambiar de estado ---------- */
+.anim-pop { animation: cardPop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
+@keyframes cardPop { 0% { transform: scale(1); } 35% { transform: scale(1.045); } 100% { transform: scale(1); } }
+.anim-heal { animation: cardHeal 1.2s ease-out; }
+@keyframes cardHeal { 0% { box-shadow: 0 0 0 0 rgba(21, 160, 90, 0.6); } 100% { box-shadow: 0 0 0 14px rgba(21, 160, 90, 0); } }
+
+/* ---------- Inicio de misión ---------- */
+.anim-launch {
+  position: fixed; inset: 0; z-index: 2500;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at 50% 60%, #13315c 0%, #071a33 70%);
+  color: #fff; text-align: center;
+  animation: launchOut 0.6s ease-in 2.6s forwards;
+}
+.anim-launch-rocket { font-size: 3.4rem; animation: rocketUp 2.8s cubic-bezier(0.5, 0, 0.75, 0) forwards; }
+.anim-launch-title { font-size: 1.05rem; font-weight: 800; letter-spacing: 1px; animation: fadeUp 0.6s ease 0.2s both; }
+.anim-launch-sub { font-size: 0.8rem; color: #c4dff8; animation: fadeUp 0.6s ease 0.45s both; }
+.anim-launch-bar { width: min(280px, 70vw); height: 6px; background: rgba(255, 255, 255, 0.15); border-radius: 4px; overflow: hidden; }
+.anim-launch-bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #8fc1f2, #ffffff); animation: launchBar 2.4s ease forwards; }
+.anim-launch-stars { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.anim-launch-stars i { position: absolute; width: 2px; height: 14px; background: linear-gradient(transparent, rgba(255, 255, 255, 0.8)); animation: starFall linear infinite; }
+@keyframes rocketUp { 0% { transform: translateY(20px); } 30% { transform: translateY(0); } 100% { transform: translateY(-60vh); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes launchBar { to { width: 100%; } }
+@keyframes launchOut { to { opacity: 0; visibility: hidden; } }
+@keyframes starFall { from { transform: translateY(-20px); } to { transform: translateY(110vh); } }
+
+/* ---------- Tormenta solar: partículas cruzando la pantalla ---------- */
+.anim-solar { position: fixed; inset: 0; pointer-events: none; z-index: 1300; overflow: hidden; opacity: 0; transition: opacity 0.8s; }
+.anim-solar.on { opacity: 1; }
+.anim-solar i {
+  position: absolute; left: -80px; height: 2px; width: 70px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 181, 71, 0.85), rgba(255, 107, 107, 0.9));
+  animation: solarStreak linear infinite;
+}
+.anim-solar::after {
+  content: "☢ TORMENTA SOLAR"; position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+  font: 800 0.72rem Inter, sans-serif; letter-spacing: 2px; color: #fff; background: rgba(217, 45, 45, 0.85);
+  padding: 5px 14px; border-radius: 999px; animation: pulse 1s infinite;
+}
+@keyframes solarStreak { from { transform: translateX(0) rotate(8deg); } to { transform: translateX(calc(100vw + 160px)) rotate(8deg); } }
+
+/* ---------- Accesibilidad: sin animaciones si el usuario lo pide ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .anim-toast, .anim-toast.out, .anim-view-enter > .panel, .anim-pop, .anim-heal,
+  .anim-launch, .anim-launch *, .anim-solar i, .anim-vignette { animation: none !important; }
+  .anim-launch { display: none; }
+  .anim-solar { display: none; }
+}

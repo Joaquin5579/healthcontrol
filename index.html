@@ -11,6 +11,12 @@
   <link rel="stylesheet" href="link.css" />
   <link rel="stylesheet" href="body.css" />
   <link rel="stylesheet" href="sound.css" />
+  <link rel="stylesheet" href="animations.css" />
+  <link rel="stylesheet" href="watermark.css" />
+  <link rel="stylesheet" href="sparklines.css" />
+  <link rel="stylesheet" href="gauges.css" />
+  <link rel="stylesheet" href="bridge.css" />
+  <link rel="stylesheet" href="theme.css" />
 </head>
 <body>
   <!-- PANTALLA DE INICIO DE SESIÓN DE LA TRIPULACIÓN -->
@@ -75,6 +81,10 @@
     <div class="sidebar-section">
       <span class="sidebar-label">NAVEGACIÓN DE MÓDULOS</span>
       <div class="sidebar-nav-list">
+        <button class="nav-tab" data-view="bridge">
+          ★ Puente de mando
+          <span class="nav-badge" id="bridgeNavBadge" style="display:none;">0</span>
+        </button>
         <button class="nav-tab active" data-view="telemetry">1. Telemetría y Diagnóstico</button>
         <button class="nav-tab" data-view="mental">
           2. Salud Mental (10d)
@@ -116,6 +126,14 @@
   <!-- =========================================================
        PESTAÑA 1: TELEMETRÍA BIOMÉDICA Y DIAGNÓSTICO
        ========================================================= -->
+  <!-- =========================================================
+       PUENTE DE MANDO: los 3 tripulantes de un vistazo
+       ========================================================= -->
+  <main class="bridge-view" id="viewBridge" style="display:none;">
+    <section class="bridge-summary" id="bridgeSummary"></section>
+    <section class="bridge-crew" id="bridgeCrew"></section>
+  </main>
+
   <main class="dashboard-grid" id="viewTelemetry">
     <section class="panel">
       <div class="panel-header">
@@ -543,6 +561,20 @@
         </div>
         <p class="link-note">Las alarmas del SCADA se envían a Houston <b>automáticamente</b>. La respuesta siempre llega tarde: por eso la tripulación y la IA de a bordo deciden primero.</p>
       </form>
+
+      <!-- IA DE A BORDO: la tripulación la consulta sola mientras espera a la Tierra -->
+      <div class="link-ai">
+        <div class="link-ai-head">
+          <span>🤖 IA DE A BORDO · responde al instante</span>
+          <span class="link-ai-wait" id="linkAiWait">—</span>
+        </div>
+        <div class="link-ai-chat" id="linkAiChat"></div>
+        <div class="link-ai-chips" id="linkAiChips"></div>
+        <form class="link-ai-form" id="linkAiForm" autocomplete="off">
+          <input type="text" id="linkAiText" maxlength="160" placeholder="Pregúntale a la IA mientras esperan a Houston…" />
+          <button type="submit" class="primary-btn">Preguntar</button>
+        </form>
+      </div>
     </section>
   </main>
 
@@ -592,5 +624,10 @@
   <script src="body.js"></script>
   <script src="sound.js"></script>
   <script src="vest-link.js"></script>
+  <script src="animations.js"></script>
+  <script src="sparklines.js"></script>
+  <script src="gauges.js"></script>
+  <script src="bridge.js"></script>
+  <script src="theme.js"></script>
 </body>
 </html>

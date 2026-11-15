@@ -1,0 +1,23 @@
+/* =========================================================
+   MINI GRÁFICOS EN LAS TARJETAS DE SIGNOS VITALES
+   Archivo aparte: no modifica ningún estilo existente.
+   ========================================================= */
+.vital-card canvas.spark {
+  display: block;
+  width: 100%;
+  height: 26px;
+  margin-top: 3px;
+}
+.spark-trend {
+  font-size: 0.56rem;
+  font-weight: 800;
+  white-space: nowrap;
+  margin-left: 6px;
+  vertical-align: middle;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+.spark-trend.flat { color: var(--text-dim); font-weight: 600; }
+.spark-trend.up { color: var(--blue-600); }
+.spark-trend.down { color: var(--navy-600); }
+.vital-card.warning .spark-trend.up, .vital-card.warning .spark-trend.down { color: var(--warning); }
+.vital-card.critical .spark-trend.up, .vital-card.critical .spark-trend.down { color: var(--critical); }

@@ -1,0 +1,126 @@
+/* =========================================================
+   MODO OSCURO "SALA DE CONTROL"
+   Archivo aparte: se activa con html[data-theme="dark"].
+   En modo claro no cambia absolutamente nada.
+   ========================================================= */
+html[data-theme="dark"] {
+  /* Fondos */
+  --bg-main: #050d1b;
+  --bg-panel: #0b1729;
+  --bg-card: #0f1f37;
+  --blue-50: #0f1f37;
+  --blue-100: #152a49;
+  --blue-200: #1f3a63;
+  --blue-300: #3a6aa8;
+  --border: #1a3152;
+  --border-strong: #27466f;
+  /* Textos: los azules marinos pasan a ser claros */
+  --navy-800: #e4eefb;
+  --navy-700: #c9dcf3;
+  --navy-600: #93b8e6;
+  --text-main: #e4eefb;
+  --text-dim: #7f9bc0;
+  /* Colores de estado sobre fondo oscuro */
+  --nominal: #2ecc80;
+  --warning: #f2a93b;
+  --critical: #ff5d5d;
+  --nominal-bg: rgba(46, 204, 128, 0.10);
+  --warning-bg: rgba(242, 169, 59, 0.12);
+  --critical-bg: rgba(255, 93, 93, 0.13);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+html[data-theme="dark"] body { background: radial-gradient(ellipse at 50% -10%, #0d2342 0%, var(--bg-main) 60%); }
+
+/* ---------- Superficies que eran blancas ---------- */
+html[data-theme="dark"] .fleet-bar,
+html[data-theme="dark"] .trend-section,
+html[data-theme="dark"] .trend-canvas-wrap,
+html[data-theme="dark"] .expand-inner,
+html[data-theme="dark"] .ack-bar,
+html[data-theme="dark"] .doppler-card,
+html[data-theme="dark"] .ai-pred,
+html[data-theme="dark"] .ai-bubble,
+html[data-theme="dark"] .link-msg,
+html[data-theme="dark"] .lai-bubble,
+html[data-theme="dark"] .cm-btn,
+html[data-theme="dark"] .anim-toast,
+html[data-theme="dark"] .sidebar-menu { background: var(--bg-panel); }
+
+html[data-theme="dark"] .fleet-card.selected,
+html[data-theme="dark"] .fleet-card.expanded,
+html[data-theme="dark"] .ai-rank.active,
+html[data-theme="dark"] .bl-item.selected,
+html[data-theme="dark"] .trend-tab.active { background: var(--blue-100); }
+
+html[data-theme="dark"] button { background: var(--blue-50); color: var(--navy-700); }
+html[data-theme="dark"] button:hover:not(:disabled) { background: var(--blue-100); }
+html[data-theme="dark"] .trend-tab { background: transparent; }
+
+/* Campos de texto y listas */
+html[data-theme="dark"] .sidebar-select,
+html[data-theme="dark"] .psych-question select,
+html[data-theme="dark"] .psych-question input[type="text"],
+html[data-theme="dark"] .login-field input,
+html[data-theme="dark"] #linkMsgText,
+html[data-theme="dark"] #linkAiText { background: #0a1628; color: var(--text-main); border-color: var(--border-strong); }
+
+/* Bitácora, checklist y bloques */
+html[data-theme="dark"] .checklist-item { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.06); }
+html[data-theme="dark"] .diag-steps { border-top-color: rgba(255, 255, 255, 0.08); }
+html[data-theme="dark"] .ai-chat,
+html[data-theme="dark"] .link-messages { background: linear-gradient(180deg, #0c1a2f, #0a1628); }
+html[data-theme="dark"] .link-ai { background: linear-gradient(180deg, #131a3a, #0b1729); border-color: #3a3480; }
+html[data-theme="dark"] .lai-bubble { border-color: #3a3480; }
+html[data-theme="dark"] .ai-method { background: rgba(255, 255, 255, 0.03); }
+
+/* ---------- Partes que usaban azul marino como FONDO ---------- */
+html[data-theme="dark"] .topbar { background: linear-gradient(90deg, #04101f 0%, #08182e 60%, #0d2342 100%); border-bottom: 1px solid #1a3152; }
+html[data-theme="dark"] .topbar .subtitle { color: #7f9bc0; }
+html[data-theme="dark"] .brand h1 { color: #ffffff; }
+html[data-theme="dark"] .sidebar-toggle-btn { background: #152a49; color: #e4eefb; border-color: #27466f; }
+html[data-theme="dark"] .sidebar-toggle-btn:hover { background: #1f3a63; }
+html[data-theme="dark"] .sidebar-header { background: #04101f; }
+html[data-theme="dark"] .nav-tab { background: var(--blue-50); color: var(--navy-700); }
+html[data-theme="dark"] .nav-tab.active { background: #1f6fd1; border-color: #1f6fd1; color: #ffffff; }
+html[data-theme="dark"] .login-box { background: #0b1729; }
+html[data-theme="dark"] .login-header { background: linear-gradient(90deg, #04101f, #0d2342); }
+html[data-theme="dark"] .login-start-btn { background: #1f6fd1; border-color: #1f6fd1; }
+html[data-theme="dark"] .login-start-btn:disabled { background: var(--blue-100); color: var(--text-dim); border-color: var(--border); }
+html[data-theme="dark"] .ai-avatar { background: linear-gradient(135deg, #1f6fd1, #3b8beb); }
+
+/* Badges, etiquetas y textos de botones con fondo de color: mantener texto blanco */
+html[data-theme="dark"] .primary-btn,
+html[data-theme="dark"] .login-btn,
+html[data-theme="dark"] .speed-btn.active,
+html[data-theme="dark"] .ack-btn,
+html[data-theme="dark"] .isa-pill.unack,
+html[data-theme="dark"] .ai-msg.user .ai-bubble,
+html[data-theme="dark"] .lai-msg.user .lai-bubble { color: #ffffff; }
+html[data-theme="dark"] .badge { background: rgba(59, 139, 235, 0.15); border-color: rgba(59, 139, 235, 0.35); color: #8fc1f2; }
+html[data-theme="dark"] .badge.ok-badge { background: rgba(46, 204, 128, 0.12); border-color: rgba(46, 204, 128, 0.4); color: #2ecc80; }
+html[data-theme="dark"] .badge.warn-badge { background: rgba(242, 169, 59, 0.14); border-color: rgba(242, 169, 59, 0.45); color: #f2a93b; }
+html[data-theme="dark"] .badge.crit-badge { background: rgba(255, 93, 93, 0.15); border-color: rgba(255, 93, 93, 0.5); color: #ff8a8a; }
+
+/* Detalles de resplandor tipo pantalla de control */
+html[data-theme="dark"] .panel { box-shadow: 0 0 0 1px rgba(59, 139, 235, 0.06), 0 8px 24px rgba(0, 0, 0, 0.35); }
+html[data-theme="dark"] .vital-value { text-shadow: 0 0 12px rgba(143, 193, 242, 0.15); }
+html[data-theme="dark"] .mission-clock { box-shadow: 0 0 12px rgba(59, 139, 235, 0.25); }
+
+/* La marca de agua se aclara para que se vea sobre el fondo oscuro */
+html[data-theme="dark"] .dashboard-grid::after, html[data-theme="dark"] .mental-grid::after,
+html[data-theme="dark"] .doppler-view::after, html[data-theme="dark"] .ai-grid::after,
+html[data-theme="dark"] .link-grid::after, html[data-theme="dark"] .body-grid::after { opacity: 0.09; }
+
+/* Barra superior compacta (con varios botones, en pantallas medianas) — aplica a ambos temas */
+.mission-clock { white-space: nowrap; }
+@media (max-width: 1100px) {
+  .topbar .subtitle { display: none; }
+  .brand h1 { font-size: 0.82rem; }
+  .topbar-right { gap: 6px; }
+  .topbar-right .sound-btn, .sidebar-toggle-btn { padding: 5px 8px; font-size: 0.68rem; }
+}
+
+/* Transición suave al cambiar de tema */
+html.theme-anim, html.theme-anim * { transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease !important; }

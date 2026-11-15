@@ -7,14 +7,16 @@ Funciona **sin conexión con la Tierra**: en el espacio profundo un mensaje pued
 ## Qué hace
 
 - **Registro de tripulación:** 3 tripulantes inician sesión con nombre, apellido y edad.
+- **Puente de mando:** los 3 tripulantes lado a lado con avatar, actividad, ubicación en la nave, riesgo de la IA, bienestar, sueño, mini gráficos y alertas.
 - **Telemetría en vivo:** ECG, frecuencia cardíaca, presión, SpO₂, temperatura, respiración, presión ocular (SANS), masa muscular, densidad ósea, sueño y radiación, con alarmas en colores según la norma ISA-101.
 - **Salud mental:** evaluación psicológica periódica e índice de bienestar.
 - **Eco-Doppler:** flujo de la vena yugular y la carótida de cada tripulante.
 - **IA clínica (local, sin internet):** aprende la línea base de cada tripulante, detecta anomalías antes que los umbrales fijos, predice riesgos a 48 h, evalúa la aptitud para tareas críticas y responde preguntas.
-- **Enlace con la Tierra:** simula el retardo de comunicación (ISS, Luna, Marte), los mensajes a Houston y a la familia, y el envío automático de alarmas y contramedidas.
+- **Enlace con la Tierra:** simula el retardo de comunicación (ISS, Luna, Marte), los mensajes a Houston y a la familia, y el envío automático de alarmas y contramedidas. Mientras esperan la respuesta, los tripulantes pueden consultar a la IA de a bordo, que responde al instante.
 - **Modelo anatómico:** silueta del cuerpo con 10 sistemas que se iluminan según su estado, con explicación y acciones.
 - **Contramedidas:** ejercicio, suplementos, descanso, videollamada familiar, LBNP y programas de 30 días. Cada una dura un tiempo, bloquea a las demás mientras está en curso y se reporta a Houston.
 - **Sonido de alarmas** (ISA-18.2), con botón para silenciar.
+- **Visual:** modo oscuro "sala de control", mini gráficos y flechas de tendencia en cada signo vital, medidores circulares, avisos animados, despegue al iniciar la misión y efecto de tormenta solar.
 - **Chaleco GPS biométrico** (`chaleco.html`): inspirado en los chalecos GPS del fútbol. Vibra con parámetros altos, ubica a cada tripulante dentro de la nave (balizas UWB) y muestra métricas de rendimiento.
 
 ## Cómo ejecutarlo
@@ -40,6 +42,12 @@ No necesita instalación ni servidor.
 | `countermeasures.js` | Contramedidas y programas de tratamiento |
 | `sound.js` / `sound.css` | Sonido de alarmas |
 | `vest-link.js` | Conexión entre el SCADA y el chaleco |
+| `bridge.js` / `bridge.css` | Puente de mando (vista general de la tripulación) |
+| `animations.js` / `animations.css` | Avisos animados, transiciones, despegue y tormenta solar |
+| `sparklines.js` / `sparklines.css` | Mini gráficos en las tarjetas de signos vitales |
+| `gauges.js` / `gauges.css` | Medidores circulares |
+| `theme.js` / `theme.css` | Modo oscuro "sala de control" |
+| `watermark.css` | Marca de agua del logo (`logo-nasa.png`, si está en la carpeta) |
 | `chaleco.html` | Chaleco GPS biométrico (página independiente) |
 
 ## Notas
