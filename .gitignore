@@ -10,3 +10,6 @@ desktop.ini
 
 # Copias comprimidas
 *.zip
+
+# Videos de presentación (pesan mucho)
+video/

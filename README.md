@@ -11,6 +11,7 @@ Funciona **sin conexión con la Tierra**: en el espacio profundo un mensaje pued
 - **Telemetría en vivo:** ECG, frecuencia cardíaca, presión, SpO₂, temperatura, respiración, presión ocular (SANS), masa muscular, densidad ósea, sueño y radiación, con alarmas en colores según la norma ISA-101.
 - **Salud mental:** evaluación psicológica periódica e índice de bienestar.
 - **Eco-Doppler:** flujo de la vena yugular y la carótida de cada tripulante.
+- **Ecocardiograma Doppler color:** vista apical de 4 cámaras con el corazón latiendo, flujo en rojo y azul, Doppler espectral mitral y aórtico con ECG, y mediciones (FEVI, gasto cardíaco, ondas E y A, masa ventricular) según los datos de cada tripulante.
 - **IA clínica (local, sin internet):** aprende la línea base de cada tripulante, detecta anomalías antes que los umbrales fijos, predice riesgos a 48 h, evalúa la aptitud para tareas críticas y responde preguntas.
 - **Enlace con la Tierra:** simula el retardo de comunicación (ISS, Luna, Marte), los mensajes a Houston y a la familia, y el envío automático de alarmas y contramedidas. Mientras esperan la respuesta, los tripulantes pueden consultar a la IA de a bordo, que responde al instante.
 - **Modelo anatómico:** silueta del cuerpo con 10 sistemas que se iluminan según su estado, con explicación y acciones.
@@ -43,6 +44,7 @@ No necesita instalación ni servidor.
 | `sound.js` / `sound.css` | Sonido de alarmas |
 | `vest-link.js` | Conexión entre el SCADA y el chaleco |
 | `bridge.js` / `bridge.css` | Puente de mando (vista general de la tripulación) |
+| `echo.js` / `echo.css` | Pestaña 4: ecocardiograma Doppler color |
 | `animations.js` / `animations.css` | Avisos animados, transiciones, despegue y tormenta solar |
 | `sparklines.js` / `sparklines.css` | Mini gráficos en las tarjetas de signos vitales |
 | `gauges.js` / `gauges.css` | Medidores circulares |

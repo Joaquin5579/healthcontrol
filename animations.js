@@ -149,7 +149,7 @@
   }
 
   // ---------- Transición al cambiar de pestaña ----------
-  const VIEWS = ["viewBridge", "viewTelemetry", "viewMental", "viewDoppler", "viewAI", "viewLink", "viewBody"];
+  const VIEWS = ["viewBridge", "viewTelemetry", "viewMental", "viewDoppler", "viewAI", "viewLink", "viewBody", "viewEcho"];
   document.querySelectorAll(".nav-tab").forEach(t => t.addEventListener("click", () => {
     setTimeout(() => {
       const v = VIEWS.map(id => document.getElementById(id)).find(el => el && el.style.display !== "none");

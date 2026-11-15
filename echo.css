@@ -1,0 +1,52 @@
+/* =========================================================
+   ECOCARDIOGRAMA DOPPLER COLOR (pestaña 4)
+   Archivo aparte: pestaña propia; la pestaña 3 no se toca.
+   ========================================================= */
+/* Pestaña 4: contenedor propio */
+html body .echo-view { padding: 12px; flex: none; min-height: auto; overflow: visible; }
+
+.echo-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.echo-seg { display: flex; gap: 2px; background: var(--blue-100); padding: 2px; border-radius: 8px; flex-wrap: wrap; }
+.echo-seg button { border: none; background: transparent; padding: 5px 11px; font-size: 0.7rem; color: var(--navy-600); border-radius: 6px; white-space: nowrap; }
+.echo-seg button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.55); }
+.echo-seg button.active { background: var(--white); color: var(--blue-600); font-weight: 800; box-shadow: var(--shadow-sm); }
+html[data-theme="dark"] .echo-seg button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); }
+html[data-theme="dark"] .echo-seg button.active { background: var(--blue-200); color: #ffffff; }
+
+.echo-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; align-items: start; }
+@media (max-width: 1000px) { .echo-grid { grid-template-columns: 1fr; } }
+.echo-left { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.echo-screen {
+  background: #02050a;
+  border: 1px solid var(--navy-700);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
+}
+.echo-screen canvas { display: block; width: 100%; }
+#echoCanvas { aspect-ratio: 640 / 500; }
+#echoSpec { aspect-ratio: 640 / 200; }
+
+.echo-right { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.echo-table { display: flex; flex-direction: column; gap: 4px; }
+.echo-table-title, .echo-findings-title { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.6px; color: var(--blue-600); margin: 2px 0 2px; }
+.echo-row {
+  display: grid; grid-template-columns: 1.5fr 1fr 1fr; align-items: center; gap: 8px;
+  padding: 5px 9px; background: var(--blue-50); border: 1px solid var(--border);
+  border-left: 3px solid var(--nominal); border-radius: 7px; font-size: 0.7rem;
+}
+.echo-row.warning { border-left-color: var(--warning); background: var(--warning-bg); }
+.echo-row.critical { border-left-color: var(--critical); background: var(--critical-bg); }
+.echo-row .er-name { color: var(--navy-800); font-weight: 600; }
+.echo-row .er-val { color: var(--navy-800); font-weight: 800; text-align: right; font-size: 0.82rem; }
+.echo-row .er-val small { font-size: 0.58rem; color: var(--text-dim); font-weight: 500; }
+.echo-row .er-ref { color: var(--text-dim); font-size: 0.6rem; text-align: right; }
+
+.echo-findings { display: flex; flex-direction: column; gap: 4px; }
+.echo-find {
+  font-size: 0.7rem; line-height: 1.4; padding: 6px 9px; border-radius: 7px;
+  background: var(--nominal-bg); border-left: 3px solid var(--nominal); color: var(--navy-800);
+}
+.echo-find.warning { background: var(--warning-bg); border-left-color: var(--warning); }
+.echo-find.critical { background: var(--critical-bg); border-left-color: var(--critical); }
+.echo-note { font-size: 0.6rem; color: var(--text-dim); line-height: 1.4; }
