@@ -1,0 +1,44 @@
+/* =========================================================
+   SCROLL NORMAL DE PÁGINA
+   Antes, cada panel tenía su propio scroll y la página quedaba fija:
+   la rueda del mouse solo funcionaba encima de ciertos paneles.
+   Ahora toda la página se desplaza como una web normal y la barra
+   superior queda fija arriba. (Se carga al final para tener prioridad.)
+   ========================================================= */
+html body {
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+html body .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+html body .dashboard-grid,
+html body .mental-grid,
+html body .doppler-view,
+html body .ai-grid,
+html body .link-grid,
+html body .body-grid,
+html body .bridge-view {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+}
+html body .dashboard-grid > .panel,
+html body .mental-grid > .panel,
+html body .doppler-view > .panel,
+html body .ai-grid > .panel,
+html body .link-grid > .panel,
+html body .body-grid > .panel {
+  overflow: visible;
+}
+/* Los paneles de cada fila tienen la misma altura y empiezan arriba */
+html body .dashboard-grid,
+html body .mental-grid,
+html body .ai-grid,
+html body .link-grid,
+html body .body-grid { align-items: start; }
+/* El modelo anatómico conserva un alto cómodo */
+html body .body-stage { min-height: 520px; }

@@ -84,6 +84,12 @@ html[data-theme="dark"] .sidebar-toggle-btn:hover { background: #1f3a63; }
 html[data-theme="dark"] .sidebar-header { background: #04101f; }
 html[data-theme="dark"] .nav-tab { background: var(--blue-50); color: var(--navy-700); }
 html[data-theme="dark"] .nav-tab.active { background: #1f6fd1; border-color: #1f6fd1; color: #ffffff; }
+html[data-theme="dark"] .login-screen {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(59, 139, 235, 0.28) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(143, 193, 242, 0.18) 0%, transparent 50%),
+    linear-gradient(160deg, #0b2545 0%, #050d1b 100%);
+}
 html[data-theme="dark"] .login-box { background: #0b1729; }
 html[data-theme="dark"] .login-header { background: linear-gradient(90deg, #04101f, #0d2342); }
 html[data-theme="dark"] .login-start-btn { background: #1f6fd1; border-color: #1f6fd1; }

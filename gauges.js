@@ -29,29 +29,15 @@
 
   // ---------- Anillos dentro de las tarjetas ----------
   // id de la tarjeta → cómo calcular el porcentaje y el texto del centro
+  // Solo donde el anillo aporta un dato que NO está escrito al lado:
+  // la dosimetría muestra la tasa (µSv/h) y el anillo, cuánto del límite de carrera ya se usó.
   const CARD_RINGS = {
-    cardSpo2: {
-      title: "Saturación de oxígeno (escala 85–100 %)",
-      calc: cs => ({ pct: (cs.vitals.spo2 - 85) / 15, text: `${cs.vitals.spo2}` })
-    },
-    cardSleep: {
-      title: "Sueño de anoche respecto a la meta de 7.5 h",
-      calc: cs => { const s = cs.sleepHistory7d[cs.sleepHistory7d.length - 1]; return { pct: s / 7.5, text: `${s.toFixed(1)}h` }; }
-    },
     cardRad: {
       title: "Dosis acumulada respecto al límite de carrera (600 mSv)",
       calc: cs => {
         const p = cs.vitals.radTotal / 600;
         return { pct: p, text: `${Math.round(p * 100)}%`, level: p > 0.75 ? "critical" : p > 0.5 ? "warning" : null };
       }
-    },
-    cardMentalIndex: {
-      big: true, title: "Índice de bienestar psicológico",
-      calc: cs => ({ pct: cs.psychScore / 100, text: `${cs.psychScore}` })
-    },
-    cardMentalSleep: {
-      big: true, title: "Sueño promedio de 7 días respecto a la meta de 7.5 h",
-      calc: cs => { const a = cs.sleepHistory7d.reduce((x, y) => x + y, 0) / cs.sleepHistory7d.length; return { pct: a / 7.5, text: `${a.toFixed(1)}h` }; }
     }
   };
 
