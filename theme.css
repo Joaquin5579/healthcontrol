@@ -117,7 +117,7 @@ html[data-theme="dark"] .mission-clock { box-shadow: 0 0 12px rgba(59, 139, 235,
 /* La marca de agua se aclara para que se vea sobre el fondo oscuro */
 html[data-theme="dark"] .dashboard-grid::after, html[data-theme="dark"] .mental-grid::after,
 html[data-theme="dark"] .doppler-view::after, html[data-theme="dark"] .ai-grid::after,
-html[data-theme="dark"] .link-grid::after, html[data-theme="dark"] .body-grid::after { opacity: 0.09; }
+html[data-theme="dark"] .link-grid::after, html[data-theme="dark"] .body-grid::after { opacity: 0.12; }
 
 /* Barra superior compacta (con varios botones, en pantallas medianas) — aplica a ambos temas */
 .mission-clock { white-space: nowrap; }

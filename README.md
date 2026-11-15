@@ -49,7 +49,7 @@ No necesita instalación ni servidor.
 | `sparklines.js` / `sparklines.css` | Mini gráficos en las tarjetas de signos vitales |
 | `gauges.js` / `gauges.css` | Medidores circulares |
 | `theme.js` / `theme.css` | Modo oscuro "sala de control" |
-| `watermark.css` | Marca de agua del logo (`logo-nasa.png`, si está en la carpeta) |
+| `watermark.css` | Marca de agua del logo (`logo-lbdln.png`, si está en la carpeta) |
 | `chaleco.html` | Chaleco GPS biométrico (página independiente) |
 
 ## Notas
