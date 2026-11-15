@@ -1,0 +1,22 @@
+/* =========================================================
+   BOTÓN DE SONIDO DE ALARMAS (barra superior)
+   Archivo aparte: no modifica ningún estilo existente.
+   ========================================================= */
+.sound-btn {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(196, 223, 248, 0.4);
+  padding: 6px 11px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.sound-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.22); border-color: #ffffff; color: #ffffff; }
+.sound-btn.muted { opacity: 0.65; }
+.sound-btn.need { animation: soundNeed 1.6s ease-in-out infinite; }
+.sound-btn.alarming { background: #d98a06; border-color: #f5b94a; animation: soundAlarm 1s ease-in-out infinite; }
+.sound-btn.alarming:hover:not(:disabled) { background: #c27a05; }
+@keyframes soundNeed { 0%, 100% { box-shadow: 0 0 0 0 rgba(196, 223, 248, 0.5); } 50% { box-shadow: 0 0 0 4px rgba(196, 223, 248, 0.15); } }
+@keyframes soundAlarm { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 185, 74, 0.7); } 50% { box-shadow: 0 0 0 5px rgba(245, 185, 74, 0.1); } }
+@media (max-width: 560px) { .sound-btn { padding: 6px 8px; font-size: 0.68rem; } }

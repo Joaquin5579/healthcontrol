@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chaleco Biométrico GPS — SCADA Orbital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy-900: #071a33; --navy-800: #0b2545; --navy-700: #13315c; --navy-600: #1d4477;
+      --blue-600: #1f6fd1; --blue-500: #3b8beb; --blue-300: #8fc1f2; --blue-200: #c4dff8; --blue-100: #e3f0fc;
+      --white: #ffffff; --text-dim: #5a7393;
+      --nominal: #15a05a; --warning: #d98a06; --critical: #d92d2d;
+      --led: #7fd4ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      color: var(--white);
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(59, 139, 235, 0.3) 0%, transparent 55%),
+        linear-gradient(180deg, var(--navy-800) 0%, var(--navy-900) 100%);
+      padding: 16px;
+    }
+    .mono { font-family: 'JetBrains Mono', Consolas, monospace; }
+    .wrap { max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    header h1 { font-size: 0.92rem; letter-spacing: 0.8px; font-weight: 800; }
+    header p { font-size: 0.66rem; color: var(--blue-200); }
+    .link-pill { font-size: 0.64rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid; }
+    .link-pill.on { color: #7ff0b5; border-color: rgba(127, 240, 181, 0.5); background: rgba(21, 160, 90, 0.15); }
+    .link-pill.off { color: #ffb547; border-color: rgba(255, 181, 71, 0.5); background: rgba(217, 138, 6, 0.15); }
+
+    .crew-tabs { display: flex; gap: 4px; background: rgba(255, 255, 255, 0.08); padding: 3px; border-radius: 9px; }
+    .crew-tabs button {
+      flex: 1; border: none; background: transparent; color: var(--blue-200); font: 600 0.72rem Inter, sans-serif;
+      padding: 8px 4px; border-radius: 7px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .crew-tabs button.active { background: var(--white); color: var(--navy-800); font-weight: 800; }
+    .crew-tabs .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; background: #7fd4ff; }
+    .crew-tabs .dot.warning { background: #ffb547; }
+    .crew-tabs .dot.critical { background: #ff6b6b; }
+
+    .grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 14px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(143, 193, 242, 0.22); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    .card h2 { font-size: 0.66rem; letter-spacing: 0.8px; color: var(--blue-300); font-weight: 800; display: flex; justify-content: space-between; gap: 8px; }
+
+    /* ---------- Chaleco ---------- */
+    .stage { position: relative; display: flex; justify-content: center; align-items: center; min-height: 360px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .stage svg { width: 100%; max-width: 440px; height: auto; overflow: visible; filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.45)); }
+    .pod { color: var(--led); }
+    .pod rect.led-strip { fill: var(--led); }
+    .view-label { font: 800 10px Inter, sans-serif; fill: #8fc1f2; letter-spacing: 1.5px; }
+    .callouts line { stroke: rgba(196, 223, 248, 0.5); stroke-width: 1; }
+    .callouts text { font: 600 8.5px Inter, sans-serif; fill: #c4dff8; }
+    .vest-shake { transform-origin: 50% 50%; transform-box: fill-box; }
+    .vibrating .vest-shake { animation: shake 0.1s linear infinite; }
+    @keyframes shake {
+      0% { transform: translate(0, 0); } 25% { transform: translate(-2.5px, 1px) rotate(-0.6deg); }
+      50% { transform: translate(2px, -1.5px) rotate(0.5deg); } 75% { transform: translate(-1px, 1.5px); } 100% { transform: translate(0, 0); }
+    }
+    .motor { fill: #1d4477; stroke: #8fc1f2; stroke-width: 1.4; transition: fill 0.2s; }
+    .vibrating .motor { fill: var(--led); }
+    .motor-wave { fill: none; stroke: var(--led); stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+    .vibrating .motor-wave { animation: mwave 0.8s ease-out infinite; }
+    @keyframes mwave { 0% { opacity: 0.85; transform: scale(1); } 100% { opacity: 0; transform: scale(2.6); } }
+    .led-strip { stroke: var(--led); transition: stroke 0.3s; filter: url(#vglow); }
+    .breath { animation: breath 3s ease-in-out infinite; }
+    .vibrating .breath { animation-duration: 0.35s; }
+    @keyframes breath { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .gps-blink { animation: blink 1.2s steps(2, start) infinite; }
+    @keyframes blink { to { visibility: hidden; } }
+    .tap-hint { text-align: center; font-size: 0.64rem; color: var(--blue-200); }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.62rem; color: var(--blue-200); justify-content: center; }
+    .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+
+    /* ---------- Estado ---------- */
+    .status { border-radius: 12px; padding: 11px 13px; text-align: center; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(143, 193, 242, 0.25); }
+    .status.warning { background: rgba(217, 138, 6, 0.18); border-color: rgba(255, 181, 71, 0.6); }
+    .status.critical { background: rgba(217, 45, 45, 0.2); border-color: rgba(255, 107, 107, 0.7); }
+    .status-name { font-size: 1rem; font-weight: 800; }
+    .status-main { font-size: 0.8rem; font-weight: 700; margin-top: 3px; color: #7ff0b5; }
+    .status.warning .status-main { color: #ffc56b; }
+    .status.critical .status-main { color: #ff8a8a; }
+    .status-why { font-size: 0.7rem; color: var(--blue-200); margin-top: 4px; line-height: 1.4; }
+    .status-actions { display: flex; gap: 6px; justify-content: center; margin-top: 9px; flex-wrap: wrap; }
+    .btn { border: 1px solid rgba(196, 223, 248, 0.45); background: rgba(255, 255, 255, 0.1); color: var(--white); font: 700 0.7rem Inter, sans-serif; padding: 7px 12px; border-radius: 7px; cursor: pointer; }
+    .btn:hover { background: rgba(255, 255, 255, 0.2); }
+    .btn.primary { background: var(--white); color: var(--navy-800); border-color: var(--white); }
+    .btn[hidden] { display: none; }
+
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .metric { background: var(--white); color: var(--navy-800); border-radius: 10px; padding: 7px 9px; border-left: 4px solid var(--nominal); display: flex; flex-direction: column; }
+    .metric.warning { border-left-color: var(--warning); background: #fff6e5; }
+    .metric.critical { border-left-color: var(--critical); background: #fdecec; }
+    .metric span { font-size: 0.56rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.3px; }
+    .metric strong { font-size: 1.02rem; }
+    .metric small { font-size: 0.6rem; color: var(--text-dim); font-weight: 500; }
+
+    /* ---------- Mapa GPS ---------- */
+    .map { background: #06162c; border: 1px solid var(--navy-600); border-radius: 12px; overflow: hidden; }
+    .map svg { width: 100%; height: auto; display: block; }
+    .mod { fill: rgba(143, 193, 242, 0.1); stroke: rgba(143, 193, 242, 0.55); stroke-width: 1.2; }
+    .mod.here { fill: rgba(127, 212, 255, 0.22); stroke: #7fd4ff; stroke-width: 2; }
+    .mod.refuge { stroke-dasharray: 4 3; }
+    .mod-label { font: 600 8.5px Inter, sans-serif; fill: rgba(196, 223, 248, 0.85); pointer-events: none; }
+    .crew-dot { stroke: #fff; stroke-width: 2; transition: cx 1s linear, cy 1s linear; }
+    .crew-tag { font: 700 9px Inter, sans-serif; fill: #fff; pointer-events: none; }
+    .ping { fill: none; stroke-width: 2; animation: ping 1s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes ping { 0% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(3.2); } }
+    .help-line { stroke: #ffb547; stroke-width: 2; stroke-dasharray: 5 4; animation: dash 0.8s linear infinite; }
+    @keyframes dash { to { stroke-dashoffset: -18; } }
+
+    .gps-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .gps-stat { background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(143, 193, 242, 0.22); border-radius: 9px; padding: 6px 9px; display: flex; flex-direction: column; }
+    .gps-stat span { font-size: 0.56rem; color: var(--blue-300); font-weight: 700; letter-spacing: 0.3px; }
+    .gps-stat strong { font-size: 0.84rem; }
+    .zones { display: flex; flex-direction: column; gap: 5px; }
+    .zones-head { display: flex; justify-content: space-between; font-size: 0.6rem; font-weight: 700; color: var(--blue-300); letter-spacing: 0.3px; }
+    .zones-head b { color: #fff; font-size: 0.7rem; }
+    .zones-bar { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); height: 18px; border-radius: 9px; overflow: visible; }
+    .zones-bar span { display: flex; align-items: center; justify-content: center; font: 800 0.56rem Inter, sans-serif; color: rgba(7, 26, 51, 0.8); }
+    .zones-bar .z1 { background: #c4dff8; border-radius: 9px 0 0 9px; }
+    .zones-bar .z2 { background: #8fc1f2; }
+    .zones-bar .z3 { background: #7ff0b5; }
+    .zones-bar .z4 { background: #ffc56b; }
+    .zones-bar .z5 { background: #ff8a8a; border-radius: 0 9px 9px 0; }
+    .zones-bar i { position: absolute; top: -4px; width: 4px; height: 26px; border-radius: 2px; background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.9); transition: left 0.8s ease; left: 0; }
+    .trail { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .help-box { font-size: 0.72rem; line-height: 1.45; border-radius: 10px; padding: 9px 11px; background: rgba(255, 255, 255, 0.06); border-left: 3px solid var(--blue-500); color: var(--blue-100); }
+    .help-box.alert { background: rgba(217, 138, 6, 0.16); border-left-color: #ffb547; }
+    .help-box.crit { background: rgba(217, 45, 45, 0.18); border-left-color: #ff6b6b; }
+    .help-box b { color: #fff; }
+
+    .history ul { list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 140px; overflow-y: auto; scrollbar-width: none; }
+    .history ul::-webkit-scrollbar { display: none; }
+    .history li { font-size: 0.68rem; color: var(--blue-100); padding: 5px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border-left: 3px solid #7fd4ff; }
+    .history li.warning { border-left-color: #ffb547; }
+    .history li.critical { border-left-color: #ff6b6b; }
+    .history li b { color: var(--white); }
+    .empty { font-size: 0.68rem; color: var(--blue-300); }
+    footer { font-size: 0.6rem; color: var(--blue-300); text-align: center; line-height: 1.55; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🦺 CHALECO GPS BIOMÉTRICO</h1>
+      <p>Inspirado en los chalecos GPS de los futbolistas · vibra con parámetros altos · ubica a cada tripulante · vinculado al SCADA</p>
+    </div>
+    <span class="link-pill off" id="linkPill">Buscando SCADA…</span>
+  </header>
+
+  <nav class="crew-tabs" id="crewTabs"></nav>
+
+  <div class="grid">
+    <!-- ===== CHALECO ===== -->
+    <section class="card">
+      <h2><span>CHALECO</span><span id="vestMode">—</span></h2>
+      <div class="stage" id="stage" title="Toca el chaleco para reconocer la alerta">
+        <svg viewBox="0 0 360 290" aria-label="Chaleco GPS deportivo (frente y espalda)">
+          <defs>
+            <pattern id="mesh" width="6" height="6" patternUnits="userSpaceOnUse">
+              <rect width="6" height="6" fill="#132f57"/>
+              <circle cx="3" cy="3" r="1.1" fill="#0a1d3a"/>
+            </pattern>
+            <linearGradient id="shade" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="rgba(0,0,0,0.35)"/>
+              <stop offset="0.25" stop-color="rgba(0,0,0,0)"/>
+              <stop offset="0.75" stop-color="rgba(0,0,0,0)"/>
+              <stop offset="1" stop-color="rgba(0,0,0,0.35)"/>
+            </linearGradient>
+            <linearGradient id="podGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2a3f5f"/>
+              <stop offset="1" stop-color="#0b1a30"/>
+            </linearGradient>
+            <filter id="vglow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g class="vest-shake">
+            <!-- ========== FRENTE ========== -->
+            <g transform="translate(0 0)">
+              <!-- cuerpo ajustado tipo top deportivo -->
+              <path d="M44 42 Q56 30 70 33 Q84 62 100 33 Q114 30 126 42 L132 78 Q138 140 133 232 Q85 246 37 232 Q32 140 38 78 Z"
+                    fill="url(#mesh)" stroke="#8fc1f2" stroke-width="2"/>
+              <path d="M44 42 Q56 30 70 33 Q84 62 100 33 Q114 30 126 42 L132 78 Q138 140 133 232 Q85 246 37 232 Q32 140 38 78 Z"
+                    fill="url(#shade)"/>
+              <!-- costuras laterales y cuello -->
+              <path d="M70 33 Q84 62 100 33" fill="none" stroke="#3b8beb" stroke-width="3"/>
+              <path d="M40 90 Q46 160 40 228" fill="none" stroke="#3b8beb" stroke-width="1.4" stroke-dasharray="4 3"/>
+              <path d="M130 90 Q124 160 130 228" fill="none" stroke="#3b8beb" stroke-width="1.4" stroke-dasharray="4 3"/>
+              <!-- banda de pecho con sensor cardíaco -->
+              <path d="M38 118 Q85 128 132 118 L132 132 Q85 142 38 132 Z" fill="#0b2545" stroke="#3b8beb" stroke-width="1.2"/>
+              <rect x="72" y="117" width="26" height="20" rx="6" fill="url(#podGrad)" stroke="#8fc1f2" stroke-width="1.2"/>
+              <path d="M77 127 L81 127 L83 121 L86 133 L88 127 L93 127" fill="none" stroke="#7ff0b5" stroke-width="1.5" stroke-linejoin="round"/>
+              <!-- motores hápticos (costillas) -->
+              <rect class="motor" x="48" y="170" width="18" height="12" rx="4"/><rect class="motor-wave" x="48" y="170" width="18" height="12" rx="4"/>
+              <rect class="motor" x="104" y="170" width="18" height="12" rx="4"/><rect class="motor-wave" x="104" y="170" width="18" height="12" rx="4"/>
+              <!-- franja reflectante / LED -->
+              <path class="led-strip breath" d="M46 212 Q85 222 124 212" fill="none" stroke-width="3.5" stroke-linecap="round"/>
+              <text x="85" y="268" text-anchor="middle" class="view-label">FRENTE</text>
+            </g>
+
+            <!-- ========== ESPALDA ========== -->
+            <g transform="translate(190 0)">
+              <path d="M44 42 Q56 30 70 30 Q85 36 100 30 Q114 30 126 42 L132 78 Q138 140 133 232 Q85 246 37 232 Q32 140 38 78 Z"
+                    fill="url(#mesh)" stroke="#8fc1f2" stroke-width="2"/>
+              <path d="M44 42 Q56 30 70 30 Q85 36 100 30 Q114 30 126 42 L132 78 Q138 140 133 232 Q85 246 37 232 Q32 140 38 78 Z"
+                    fill="url(#shade)"/>
+              <path d="M85 36 L85 232" fill="none" stroke="#3b8beb" stroke-width="1.2" stroke-dasharray="4 3"/>
+              <!-- bolsillo entre los omóplatos -->
+              <rect x="64" y="46" width="42" height="56" rx="8" fill="#0d2240" stroke="#3b8beb" stroke-width="1.6"/>
+              <rect x="64" y="46" width="42" height="56" rx="8" fill="url(#mesh)" opacity="0.5"/>
+              <!-- módulo GPS / UWB (el "pod") -->
+              <g class="pod">
+                <rect class="motor-wave" x="69" y="52" width="32" height="46" rx="8"/>
+                <rect x="69" y="52" width="32" height="46" rx="8" fill="url(#podGrad)" stroke="#c4dff8" stroke-width="1.4"/>
+                <rect class="led-strip breath" x="75" y="58" width="20" height="4" rx="2" fill="currentColor" stroke-width="0"/>
+                <circle class="gps-blink" cx="92" cy="90" r="2" fill="#7ff0b5"/>
+                <text x="85" y="78" text-anchor="middle" font-size="6.5" font-weight="800" fill="#c4dff8">UWB</text>
+                <text x="85" y="86" text-anchor="middle" font-size="6.5" font-weight="800" fill="#c4dff8">GPS</text>
+              </g>
+              <!-- dosímetro (zona lumbar) -->
+              <g transform="translate(85 176)">
+                <rect x="-15" y="-10" width="30" height="20" rx="5" fill="#e9f2fc" stroke="#1d4477" stroke-width="1.3"/>
+                <text x="0" y="5" text-anchor="middle" font-size="11">☢</text>
+              </g>
+              <path class="led-strip breath" d="M46 212 Q85 222 124 212" fill="none" stroke-width="3.5" stroke-linecap="round"/>
+              <text x="85" y="268" text-anchor="middle" class="view-label">ESPALDA</text>
+            </g>
+
+            <!-- etiquetas con línea guía -->
+            <g class="callouts">
+              <line x1="98" y1="126" x2="160" y2="110"/><text x="162" y="108">Sensor cardíaco</text>
+              <line x1="296" y1="62" x2="300" y2="22"/><text x="258" y="18">Módulo GPS·UWB + vibración</text>
+              <line x1="290" y1="176" x2="330" y2="200"/><text x="300" y="212">Dosímetro</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="tap-hint" id="tapHint">Toca el chaleco para activar la vibración y el sonido</div>
+      <div class="legend">
+        <span><i style="background:#7fd4ff"></i>Luz de estado del módulo</span>
+        <span><i style="background:#1d4477;border:1px solid #8fc1f2"></i>Vibración (módulo + 2 motores)</span>
+        <span><i style="background:#132f57;border:1px solid #3b8beb"></i>Tela compresiva de malla</span>
+      </div>
+
+      <div class="status" id="status">
+        <div class="status-name" id="stName">—</div>
+        <div class="status-main" id="stMain">Esperando datos del SCADA…</div>
+        <div class="status-why" id="stWhy">Ábrelo con el botón «🦺 Chaleco» del SCADA, o deja ambas páginas abiertas en la misma carpeta.</div>
+        <div class="status-actions">
+          <button class="btn primary" id="ackBtn" hidden>✓ Reconocer alerta</button>
+          <button class="btn" id="testBtn">Probar vibración</button>
+          <button class="btn" id="muteBtn">🔔 Sonido activo</button>
+        </div>
+      </div>
+
+      <div class="metrics" id="metrics"></div>
+    </section>
+
+    <!-- ===== LOCALIZACIÓN ===== -->
+    <section class="card">
+      <h2><span>LOCALIZACIÓN DENTRO DE LA NAVE</span><span id="gpsFix" class="mono">—</span></h2>
+      <div class="map">
+        <svg viewBox="0 0 600 270" id="mapSvg" aria-label="Mapa de la nave">
+          <g id="mapModules"></g>
+          <g id="mapHelp"></g>
+          <g id="mapCrew"></g>
+        </svg>
+      </div>
+      <div class="gps-stats">
+        <div class="gps-stat"><span>MÓDULO</span><strong id="gpsModule">—</strong></div>
+        <div class="gps-stat"><span>POSICIÓN (X, Y)</span><strong class="mono" id="gpsXY">—</strong></div>
+        <div class="gps-stat"><span>AL REFUGIO</span><strong class="mono" id="gpsRefuge">—</strong></div>
+      </div>
+      <div class="help-box" id="helpBox">—</div>
+
+      <h2><span>RENDIMIENTO (COMO EN EL FÚTBOL)</span><span class="mono" id="sportSince">—</span></h2>
+      <div class="gps-stats">
+        <div class="gps-stat"><span>DISTANCIA RECORRIDA</span><strong class="mono" id="spDist">—</strong></div>
+        <div class="gps-stat"><span>VELOCIDAD</span><strong class="mono" id="spSpeed">—</strong></div>
+        <div class="gps-stat"><span>CARGA DE TRABAJO</span><strong class="mono" id="spLoad">—</strong></div>
+      </div>
+      <div class="zones">
+        <div class="zones-head"><span>ZONA CARDÍACA</span><b id="spZoneTxt">—</b></div>
+        <div class="zones-bar">
+          <span class="z1">Z1</span><span class="z2">Z2</span><span class="z3">Z3</span><span class="z4">Z4</span><span class="z5">Z5</span>
+          <i id="spZoneMark"></i>
+        </div>
+      </div>
+
+      <div class="history">
+        <h2><span>HISTORIAL DE VIBRACIONES</span></h2>
+        <ul id="history"><li class="empty">Todavía no vibró.</li></ul>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    Igual que en el fútbol profesional, el chaleco es una camiseta compresiva ajustada con el módulo de rastreo en un bolsillo entre los omóplatos,
+    donde no molesta y no se golpea.<br>
+    El GPS satelital no funciona en el espacio profundo: el chaleco usa <b>localización interna por balizas de banda ultraancha (UWB)</b>
+    instaladas en cada módulo, con precisión de unos 10 cm — el "GPS de la nave".<br>
+    Advertencia: 2 pulsos cada 5 s · Crítico: vibración larga cada 2 s · Alerta anticipada de la IA: 1 pulso suave · En Android, también vibra el teléfono.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const SCADA_KEY = "orbital_med_scada_v46";
+  const CREW_KEY = "orbital_med_scada_crew_v1";
+  const ROLES = ["Cmdr.", "Ing.", "Esp."];
+  const IDS = ["AST-01", "AST-02", "AST-03"];
+  const HOME = ["destiny", "destiny", "quest"];          // módulo de trabajo de cada tripulante
+  const CREW_COLORS = ["#7fd4ff", "#b49cff", "#7ff0b5"];
+  const CARD_NAMES = {
+    hrStatus: "Frecuencia cardíaca", bpStatus: "Presión arterial", spo2Status: "Saturación de oxígeno",
+    tempStatus: "Temperatura", rrStatus: "Frecuencia respiratoria", sansStatus: "Presión ocular",
+    muscleStatus: "Masa muscular", boneStatus: "Densidad ósea", sleepStatus: "Sueño", radStatus: "Radiación"
+  };
+  const COLORS = { nominal: "#7fd4ff", ai: "#9fb7ff", warning: "#ffb547", critical: "#ff6b6b" };
+  const REPEAT = { warning: 5000, critical: 2000 };
+  const M_PER_PX = 0.09;   // escala del mapa (metros por unidad)
+
+  // Mapa simplificado de la nave (vista superior)
+  const MODULES = {
+    // lx, ly, a = posición y alineación de la etiqueta (para que no se encimen)
+    zvezda:   { name: "Zvezda · Refugio", x: 20,  y: 112, w: 100, h: 46, refuge: true, lx: 70,  ly: 106, a: "middle" },
+    zarya:    { name: "Zarya",            x: 120, y: 114, w: 80,  h: 42, lx: 160, ly: 108, a: "middle" },
+    unity:    { name: "Unity",            x: 200, y: 116, w: 46,  h: 38, lx: 223, ly: 138, a: "middle" },
+    destiny:  { name: "Destiny · Laboratorio", x: 246, y: 112, w: 130, h: 46, lx: 311, ly: 106, a: "middle" },
+    harmony:  { name: "Harmony · Camarotes",   x: 376, y: 116, w: 56,  h: 38, lx: 404, ly: 110, a: "middle" },
+    columbus: { name: "Columbus",         x: 432, y: 114, w: 80,  h: 42, lx: 472, ly: 168, a: "middle" },
+    kibo:     { name: "Kibo",             x: 380, y: 160, w: 48,  h: 82, lx: 404, ly: 254, a: "middle" },
+    quest:    { name: "Quest · Esclusa",  x: 202, y: 52,  w: 42,  h: 64, lx: 196, ly: 86,  a: "end" },
+    tranq:    { name: "Tranquility · Gimnasio", x: 202, y: 154, w: 42, h: 66, lx: 196, ly: 190, a: "end" },
+    cupola:   { name: "Cúpula",           x: 207, y: 220, w: 32,  h: 26, lx: 201, ly: 238, a: "end" },
+    outside:  { name: "Exterior (caminata espacial)", x: 252, y: 18, w: 110, h: 34, ext: true, lx: 307, ly: 13, a: "middle" }
+  };
+  const MODE_PLACE = { refugio: "zvezda", ejercicio: "tranq", sueno: "harmony", eva: "outside" };
+  const MODE_TXT = { reposo: "En reposo", sueno: "Durmiendo", ejercicio: "Haciendo ejercicio", eva: "Caminata espacial", refugio: "En el refugio blindado" };
+
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  let crewIdx = Math.min(2, Math.max(0, Number(params.get("crew")) || 0));
+  let crewChosen = params.has("crew");
+  let latest = null, lastMet = null, lastMetChange = 0, viaOpener = false;
+  let muted = false, audio = null, lastBuzz = 0, ackedSig = "", prevSig = "";
+  const history = [];
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // ---------- Datos del SCADA ----------
+  window.addEventListener("message", e => {
+    if (!e.data || e.data.type !== "scada-vest") return;
+    viaOpener = true;
+    latest = { names: e.data.names, crewStates: e.data.crewStates, met: e.data.met, at: Date.now() };
+    if (e.data.activeCrew !== undefined && !crewChosen) { crewIdx = e.data.activeCrew; crewChosen = true; }
+  });
+  function readStorage() {
+    if (viaOpener && latest && Date.now() - latest.at < 4000) return;
+    try {
+      const st = JSON.parse(localStorage.getItem(SCADA_KEY) || "null");
+      if (!st || !st.crewStates) return;
+      const ids = JSON.parse(localStorage.getItem(CREW_KEY) || "null") || [];
+      const names = IDS.map((id, i) => ({ id, name: ids[i] ? `${ROLES[i]} ${ids[i].nombre} ${ids[i].apellido}` : `Tripulante ${i + 1}` }));
+      if (st.metSeconds !== lastMet) { lastMet = st.metSeconds; lastMetChange = Date.now(); }
+      latest = { names, crewStates: st.crewStates, met: st.metSeconds, at: lastMetChange };
+    } catch (e) {}
+  }
+
+  function analyze(i) {
+    const cs = latest.crewStates[i];
+    const d = cs.diagnosis || { level: "nominal", cardStates: {} };
+    const issues = Object.entries(d.cardStates || {}).filter(([, s]) => s !== "nominal").map(([k, s]) => ({ name: CARD_NAMES[k] || k, level: s }));
+    const ai = (cs.ai && cs.ai.anomalies ? cs.ai.anomalies : []).map(a => (a.metric && a.metric.label) || "parámetro");
+    let level = d.level;
+    if (level === "nominal" && issues.some(x => x.level === "critical")) level = "critical";
+    if (level === "nominal" && issues.length) level = "warning";
+    const kind = level !== "nominal" ? level : ai.length ? "ai" : "nominal";
+    const reasons = [];
+    if (d.level !== "nominal") reasons.push(d.title);
+    issues.forEach(x => { if (!reasons.some(r => r.toLowerCase().includes(x.name.toLowerCase()))) reasons.push(`${x.name} fuera de rango`); });
+    ai.forEach(n => reasons.push(`IA: ${n} se desvía de su patrón`));
+    return { cs, d, kind, reasons, sig: `${kind}|${reasons.join("|")}`, acked: !!cs.alarmAcked };
+  }
+
+  // ---------- Localización (posición estimada por balizas UWB) ----------
+  function locate(i) {
+    const cs = latest.crewStates[i];
+    const key = MODE_PLACE[cs.mode] || HOME[i];
+    const m = MODULES[key];
+    const t = Date.now() / 1000;
+    // pequeño movimiento natural dentro del módulo
+    const px = m.x + m.w / 2 + Math.sin(t / 7 + i * 2.1) * (m.w / 2 - 10) * 0.7 + (i - 1) * 6;
+    const py = m.y + m.h / 2 + Math.cos(t / 5 + i * 1.3) * (m.h / 2 - 9) * 0.6;
+    return { key, m, x: px, y: py };
+  }
+  const distM = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) * M_PER_PX;
+
+  // ---------- Métricas deportivas (como los chalecos GPS de fútbol) ----------
+  const sport = [0, 1, 2].map(() => ({ trail: [], dist: 0, load: 0, speed: 0, since: Date.now() }));
+  const HR_MAX = 180;   // frecuencia máxima de referencia (≈ 220 − 40 años)
+  function updateSport(locs) {
+    const now = Date.now();
+    locs.forEach((l, i) => {
+      const s = sport[i];
+      const last = s.trail[s.trail.length - 1];
+      if (last) {
+        const dt = Math.max(0.2, (now - last.t) / 1000);
+        const d = distM(last, l);
+        s.dist += d;
+        s.speed = d / dt;
+        const hr = latest.crewStates[i].vitals.hr;
+        // Carga de trabajo: esfuerzo cardíaco + movimiento (similar al "Player Load" del fútbol)
+        s.load += (Math.max(0, hr - 60) / 60) * (dt / 60) * 10 + d * 0.4;
+      }
+      s.trail.push({ x: l.x, y: l.y, t: now });
+      if (s.trail.length > 90) s.trail.shift();
+    });
+  }
+  function hrZone(hr) {
+    const p = hr / HR_MAX;
+    if (p < 0.6) return { z: 1, txt: "Z1 · Recuperación", pos: p / 0.6 * 0.2 };
+    if (p < 0.7) return { z: 2, txt: "Z2 · Suave", pos: 0.2 + (p - 0.6) / 0.1 * 0.2 };
+    if (p < 0.8) return { z: 3, txt: "Z3 · Moderada", pos: 0.4 + (p - 0.7) / 0.1 * 0.2 };
+    if (p < 0.9) return { z: 4, txt: "Z4 · Intensa", pos: 0.6 + (p - 0.8) / 0.1 * 0.2 };
+    return { z: 5, txt: "Z5 · Máxima", pos: Math.min(0.99, 0.8 + (p - 0.9) / 0.1 * 0.2) };
+  }
+
+  // ---------- Vibración ----------
+  function ensureAudio() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!audio) audio = new AC();
+    if (audio.state === "suspended") audio.resume();
+    $("tapHint").textContent = "Toca el chaleco para reconocer la alerta";
+  }
+  function buzzSound(kind) {
+    if (muted || !audio || audio.state !== "running") return;
+    const t = audio.currentTime + 0.02;
+    const pulses = kind === "critical" ? [[0, 0.75]] : kind === "warning" ? [[0, 0.2], [0.32, 0.2]] : [[0, 0.12]];
+    pulses.forEach(([off, dur]) => {
+      const o = audio.createOscillator(), g = audio.createGain(), lfo = audio.createOscillator(), lg = audio.createGain();
+      o.type = "square"; o.frequency.value = kind === "critical" ? 110 : 90;
+      lfo.frequency.value = 32; lg.gain.value = 0.05; lfo.connect(lg).connect(g.gain);
+      const vol = kind === "ai" ? 0.05 : 0.1;
+      g.gain.setValueAtTime(0.0001, t + off);
+      g.gain.exponentialRampToValueAtTime(vol, t + off + 0.02);
+      g.gain.setValueAtTime(vol, t + off + dur - 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + off + dur);
+      o.connect(g).connect(audio.destination);
+      o.start(t + off); lfo.start(t + off); o.stop(t + off + dur + 0.05); lfo.stop(t + off + dur + 0.05);
+    });
+  }
+  function vibrate(kind, label) {
+    const stage = $("stage");
+    const ms = kind === "critical" ? 900 : kind === "warning" ? 700 : 350;
+    stage.classList.add("vibrating");
+    clearTimeout(vibrate._t);
+    vibrate._t = setTimeout(() => stage.classList.remove("vibrating"), ms);
+    // El navegador solo permite vibrar el teléfono después de que el usuario tocó la página
+    const touched = navigator.userActivation ? navigator.userActivation.hasBeenActive : !!audio;
+    if (navigator.vibrate && touched) navigator.vibrate(kind === "critical" ? [700, 150, 700] : kind === "warning" ? [200, 120, 200] : [120]);
+    buzzSound(kind);
+    if (label) addHistory(kind, label);
+  }
+  function addHistory(kind, text) {
+    const now = new Date().toTimeString().slice(0, 8);
+    history.unshift({ kind, text, now, who: latest ? latest.names[crewIdx].name : "" });
+    if (history.length > 25) history.pop();
+    $("history").innerHTML = history.map(h => `<li class="${h.kind === "ai" ? "" : h.kind}"><b>${h.now}</b> · ${esc(h.who)} · ${esc(h.text)}</li>`).join("");
+  }
+
+  // ---------- Dibujo ----------
+  function setLed(kind) { document.documentElement.style.setProperty("--led", COLORS[kind] || COLORS.nominal); }
+  function metric(label, value, unit, level) {
+    return `<div class="metric ${level}"><span>${label}</span><strong class="mono">${value} <small>${unit}</small></strong></div>`;
+  }
+
+  function renderMap(analyses, locs) {
+    const here = locs[crewIdx].key;
+    $("mapModules").innerHTML = Object.entries(MODULES).map(([k, m]) => `
+      <rect class="mod ${k === here ? "here" : ""} ${m.refuge ? "refuge" : ""}" x="${m.x}" y="${m.y}" width="${m.w}" height="${m.h}" rx="${m.ext ? 4 : 10}" ${m.ext ? 'stroke-dasharray="3 4"' : ""}/>
+      <text class="mod-label" x="${m.lx}" y="${m.ly}" text-anchor="${m.a}">${m.name}</text>`).join("");
+
+    // Si el tripulante seleccionado tiene una alerta, se marca el camino del compañero más cercano
+    const me = analyses[crewIdx];
+    let helpSvg = "";
+    if (me.kind === "warning" || me.kind === "critical") {
+      const others = locs.map((l, i) => ({ l, i })).filter(o => o.i !== crewIdx).sort((a, b) => distM(a.l, locs[crewIdx]) - distM(b.l, locs[crewIdx]));
+      const near = others[0];
+      if (near) helpSvg = `<line class="help-line" x1="${near.l.x}" y1="${near.l.y}" x2="${locs[crewIdx].x}" y2="${locs[crewIdx].y}"/>`;
+    }
+    // Rastro del recorrido (como el mapa de movimiento de un jugador)
+    const tr = sport[crewIdx].trail;
+    const trailCol = CREW_COLORS[crewIdx];
+    let trailSvg = "";
+    for (let k = 1; k < tr.length; k++) {
+      const op = (k / tr.length) * 0.75;
+      trailSvg += `<line class="trail" x1="${tr[k - 1].x}" y1="${tr[k - 1].y}" x2="${tr[k].x}" y2="${tr[k].y}" stroke="${trailCol}" stroke-opacity="${op.toFixed(2)}" stroke-width="${(1 + op * 3).toFixed(1)}"/>`;
+    }
+    $("mapHelp").innerHTML = trailSvg + helpSvg;
+
+    $("mapCrew").innerHTML = locs.map((l, i) => {
+      const a = analyses[i];
+      const col = a.kind === "critical" ? "#ff6b6b" : a.kind === "warning" ? "#ffb547" : CREW_COLORS[i];
+      const pingCol = a.kind === "nominal" ? CREW_COLORS[i] : col;
+      const initials = latest.names[i].name.split(" ").slice(1).map(w => w[0] || "").join("").slice(0, 2).toUpperCase() || (i + 1);
+      return `
+        ${i === crewIdx || a.kind !== "nominal" ? `<circle class="ping" cx="${l.x}" cy="${l.y}" r="7" stroke="${pingCol}"/>` : ""}
+        <circle class="crew-dot" cx="${l.x}" cy="${l.y}" r="${i === crewIdx ? 8 : 6.5}" fill="${col}"/>
+        <text class="crew-tag" x="${l.x}" y="${l.y - 12}" text-anchor="middle">${esc(initials)}</text>`;
+    }).join("");
+  }
+
+  function render() {
+    const locs = latest.names.map((_, i) => locate(i));
+    const analyses = latest.names.map((_, i) => analyze(i));
+    const a = analyses[crewIdx];
+    const cs = a.cs, v = cs.vitals, card = a.d.cardStates || {};
+    const sleep = cs.sleepHistory7d ? cs.sleepHistory7d[cs.sleepHistory7d.length - 1] : null;
+    const quiet = a.sig === ackedSig || (a.acked && a.kind !== "ai");
+
+    // Pestañas
+    $("crewTabs").innerHTML = latest.names.map((n, i) => {
+      const k = analyses[i].kind;
+      return `<button class="${i === crewIdx ? "active" : ""}" data-i="${i}"><span class="dot ${k === "ai" ? "" : k}"></span>${esc(n.name)}</button>`;
+    }).join("");
+
+    // Estado del chaleco
+    $("stName").textContent = `${latest.names[crewIdx].name} (${latest.names[crewIdx].id})`;
+    $("vestMode").textContent = MODE_TXT[cs.mode] || cs.mode;
+    $("status").className = `status ${a.kind === "ai" ? "warning" : a.kind}`;
+    if (a.kind === "nominal") {
+      $("stMain").textContent = "✓ Parámetros normales · franjas azules";
+      $("stWhy").textContent = "El chaleco no vibra. Monitoreo continuo de corazón, respiración, radiación y posición.";
+    } else {
+      const title = a.kind === "critical" ? "⚠ CRÍTICO · vibración larga cada 2 s" : a.kind === "warning" ? "⚠ PARÁMETROS ALTOS · 2 pulsos cada 5 s" : "◆ ALERTA ANTICIPADA DE LA IA · 1 pulso";
+      $("stMain").textContent = quiet ? "✓ Alerta reconocida · el chaleco dejó de vibrar" : title;
+      $("stWhy").textContent = a.reasons.join(" · ");
+    }
+    $("ackBtn").hidden = a.kind === "nominal" || quiet;
+    $("metrics").innerHTML =
+      metric("PULSO", v.hr, "lpm", card.hrStatus || "nominal") +
+      metric("OXÍGENO", v.spo2, "%", card.spo2Status || "nominal") +
+      metric("RESPIRACIÓN", v.rr, "rpm", card.rrStatus || "nominal") +
+      metric("TEMPERATURA", Number(v.temp).toFixed(1), "°C", card.tempStatus || "nominal") +
+      metric("RADIACIÓN", Number(v.radRate).toFixed(1), "µSv/h", card.radStatus || "nominal") +
+      metric("SUEÑO", sleep !== null ? Number(sleep).toFixed(1) : "—", "h", card.sleepStatus || "nominal");
+    setLed(a.kind);
+
+    // Localización
+    const me = locs[crewIdx];
+    updateSport(locs);
+    renderMap(analyses, locs);
+
+    // Rendimiento
+    const sp = sport[crewIdx];
+    $("spDist").textContent = sp.dist < 1000 ? `${sp.dist.toFixed(1)} m` : `${(sp.dist / 1000).toFixed(2)} km`;
+    $("spSpeed").textContent = `${sp.speed.toFixed(2)} m/s`;
+    $("spLoad").textContent = `${Math.round(sp.load)} UA`;
+    const mins = Math.max(0, Math.round((Date.now() - sp.since) / 60000));
+    $("sportSince").textContent = `sesión: ${mins} min`;
+    const zone = hrZone(v.hr);
+    $("spZoneTxt").textContent = `${zone.txt} · ${v.hr} lpm (${Math.round(v.hr / HR_MAX * 100)}% máx.)`;
+    $("spZoneMark").style.left = `calc(${(zone.pos * 100).toFixed(1)}% - 2px)`;
+    $("gpsModule").textContent = me.m.name.split(" · ")[0];
+    $("gpsXY").textContent = `${(me.x * M_PER_PX).toFixed(1)} · ${(me.y * M_PER_PX).toFixed(1)} m`;
+    const refuge = MODULES.zvezda;
+    const refDist = me.key === "zvezda" ? 0 : distM(me, { x: refuge.x + refuge.w / 2, y: refuge.y + refuge.h / 2 });
+    $("gpsRefuge").textContent = me.key === "zvezda" ? "Adentro ✓" : `${refDist.toFixed(1)} m`;
+    $("gpsFix").textContent = "UWB ±10 cm · 3 balizas";
+
+    const others = locs.map((l, i) => ({ l, i })).filter(o => o.i !== crewIdx).sort((x, y) => distM(x.l, me) - distM(y.l, me));
+    const near = others[0];
+    const box = $("helpBox");
+    if (a.kind === "warning" || a.kind === "critical") {
+      box.className = `help-box ${a.kind === "critical" ? "crit" : "alert"}`;
+      box.innerHTML = `🚨 <b>${esc(latest.names[near.i].name)}</b> es el compañero más cercano (<b>${distM(near.l, me).toFixed(1)} m</b>, en ${esc(near.l.m.name.split(" · ")[0])}). ` +
+        `Su chaleco recibe la ubicación exacta para acudir en ${Math.max(5, Math.round(distM(near.l, me) / 0.5))} s aprox.` +
+        (a.reasons.some(r => /SOLAR|RADIACI/i.test(r)) && me.key !== "zvezda" ? ` <br>☢ Ruta al refugio blindado: <b>${refDist.toFixed(1)} m</b>.` : "");
+    } else {
+      box.className = "help-box";
+      box.innerHTML = `📍 ${esc(latest.names[crewIdx].name.split(" ").slice(1).join(" "))} está en <b>${esc(me.m.name)}</b>. Compañero más cercano: <b>${esc(latest.names[near.i].name)}</b> a ${distM(near.l, me).toFixed(1)} m.`;
+    }
+    return a;
+  }
+
+  // ---------- Bucle principal ----------
+  function tick() {
+    readStorage();
+    const fresh = latest && Date.now() - latest.at < 5000;
+    const pill = $("linkPill");
+    pill.className = `link-pill ${fresh ? "on" : "off"}`;
+    pill.textContent = fresh ? "● Vinculado al SCADA" : latest ? "SCADA en pausa o cerrado" : "Buscando SCADA…";
+    if (!latest) return;
+    const a = render();
+
+    if (a.sig !== prevSig) { lastBuzz = 0; prevSig = a.sig; }
+    const quiet = a.sig === ackedSig || (a.acked && a.kind !== "ai");
+    if (!fresh || a.kind === "nominal" || quiet) return;
+    const now = Date.now();
+    if (a.kind === "ai") {
+      if (lastBuzz === 0) { vibrate("ai", a.reasons[0]); lastBuzz = now; }
+    } else if (now - lastBuzz >= REPEAT[a.kind]) {
+      vibrate(a.kind, lastBuzz === 0 ? a.reasons[0] : null);
+      lastBuzz = now;
+    }
+  }
+  setInterval(tick, 1000);
+  tick();
+
+  // ---------- Acciones ----------
+  function acknowledge() {
+    if (!latest) return;
+    const a = analyze(crewIdx);
+    if (a.kind === "nominal" || a.sig === ackedSig || (a.acked && a.kind !== "ai")) return;   // ya estaba reconocida
+    ackedSig = a.sig;
+    if (window.opener && !window.opener.closed) window.opener.postMessage({ type: "vest-ack", crew: crewIdx }, "*");
+    addHistory("nominal", "Alerta reconocida tocando el chaleco");
+    $("stage").classList.remove("vibrating");
+    tick();
+  }
+  $("stage").addEventListener("click", () => {
+    const first = !audio;
+    ensureAudio();
+    if (!first) acknowledge(); else tick();
+  });
+  $("ackBtn").addEventListener("click", () => { ensureAudio(); acknowledge(); });
+
+  $("testBtn").addEventListener("click", () => { ensureAudio(); setTimeout(() => vibrate("warning", "Prueba de vibración"), 60); });
+  $("muteBtn").addEventListener("click", () => { ensureAudio(); muted = !muted; $("muteBtn").textContent = muted ? "🔕 Sin sonido" : "🔔 Sonido activo"; });
+  $("crewTabs").addEventListener("click", e => {
+    const b = e.target.closest("[data-i]");
+    if (!b) return;
+    crewIdx = Number(b.dataset.i); crewChosen = true;
+    ackedSig = ""; prevSig = ""; lastBuzz = 0;
+    tick();
+  });
+})();
+</script>
+</body>
+</html>

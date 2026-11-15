@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCADA Biomédico Orbital — Interfaz Completa & Simulada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="link.css" />
+  <link rel="stylesheet" href="body.css" />
+  <link rel="stylesheet" href="sound.css" />
+</head>
+<body>
+  <!-- PANTALLA DE INICIO DE SESIÓN DE LA TRIPULACIÓN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <div class="login-header">
+        <div class="status-dot"></div>
+        <div>
+          <h1>SCADA BIOMÉDICO ORBITAL · REGISTRO DE TRIPULACIÓN</h1>
+          <p class="subtitle">Cada tripulante debe iniciar sesión con su nombre, apellido y edad antes de comenzar la misión.</p>
+        </div>
+      </div>
+      <div class="login-grid" id="loginGrid"></div>
+      <div class="login-footer">
+        <span class="login-status mono" id="loginStatus">0/3 sesiones iniciadas</span>
+        <button class="login-start-btn" id="startMissionBtn" disabled>Comenzar misión ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRA SUPERIOR COMPACTA -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="status-dot" id="systemLed" title="Estado General del Sistema"></div>
+      <div>
+        <h1>SCADA BIOMÉDICO ORBITAL · ISS</h1>
+        <p class="subtitle" id="topbarSub">Monitor Telemétrico Autónomo & Eco-Doppler</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="mission-clock mono" id="missionClock">042d 14h 22m 10s</div>
+      <button class="sidebar-toggle-btn" id="sidebarToggle" title="Abrir Menú de Control">☰ Opciones</button>
+    </div>
+  </header>
+
+  <!-- MENÚ LATERAL DESPLEGABLE (SIDEBAR) -->
+  <aside class="sidebar-menu" id="sidebarMenu">
+    <div class="sidebar-header">
+      <h3>PANEL DE CONTROL</h3>
+      <button class="close-sidebar-btn" id="sidebarClose">✕</button>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="sidebar-label">VELOCIDAD DE MISIÓN (MET)</span>
+      <div class="speed-buttons">
+        <button class="speed-btn active" data-speed="1">1x</button>
+        <button class="speed-btn" data-speed="3600">1h/s</button>
+        <button class="speed-btn" data-speed="86400">1d/s</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="sidebar-label">SELECCIÓN DE TRIPULANTE</span>
+      <select id="crewSelect" class="sidebar-select">
+        <option value="0">Cmdr. V. Rossi (AST-01)</option>
+        <option value="1">Ing. M. Alvarez (AST-02)</option>
+        <option value="2">Esp. K. Tanaka (AST-03)</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="sidebar-label">NAVEGACIÓN DE MÓDULOS</span>
+      <div class="sidebar-nav-list">
+        <button class="nav-tab active" data-view="telemetry">1. Telemetría y Diagnóstico</button>
+        <button class="nav-tab" data-view="mental">
+          2. Salud Mental (10d)
+          <span class="nav-badge" id="psychPendingBadge" style="display:none;">1</span>
+        </button>
+        <button class="nav-tab" data-view="doppler">3. Eco-Doppler Tripulación</button>
+        <button class="nav-tab" data-view="ai">
+          4. IA Clínica
+          <span class="nav-badge" id="aiNavBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-tab" data-view="link">
+          5. Enlace con Tierra
+          <span class="nav-badge" id="linkNavBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-tab" data-view="body">
+          6. Modelo Anatómico
+          <span class="nav-badge" id="bodyNavBadge" style="display:none;">0</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:auto;">
+      <button class="small-btn" id="exportCsvBtn" style="width:100%;margin-bottom:8px;">Exportar Bitácora CSV</button>
+      <button class="small-btn danger-outline" id="resetMissionBtn" style="width:100%;margin-bottom:8px;">Reiniciar Misión (Día 42)</button>
+      <button class="small-btn" id="logoutBtn" style="width:100%;">Cerrar sesión de la tripulación</button>
+    </div>
+  </aside>
+
+  <!-- BARRA MULTI-TRIPULANTE COMPACTA -->
+  <section class="fleet-bar">
+    <div class="fleet-header">
+      <span class="fleet-title">ESTADO DE TRIPULACIÓN (CLIC PARA VER TODOS LOS SIGNOS VITALES)</span>
+      <span class="fleet-hint" id="fleetSummary">3/3 Tripulantes nominales</span>
+    </div>
+    <div class="fleet-grid" id="fleetGrid"></div>
+    <div class="fleet-expand" id="fleetExpand"></div>
+  </section>
+
+  <!-- =========================================================
+       PESTAÑA 1: TELEMETRÍA BIOMÉDICA Y DIAGNÓSTICO
+       ========================================================= -->
+  <main class="dashboard-grid" id="viewTelemetry">
+    <section class="panel">
+      <div class="panel-header">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <h2>TELEMETRÍA — <span id="detailCrewTitle" class="crew-name-strong">CMDR. V. ROSSI (AST-01)</span></h2>
+          <span class="badge" id="gravityBadge">ÓRBITA (0g)</span>
+        </div>
+        <span class="live-tag" id="solarBanner">● RADIACIÓN CÓSMICA (GCR)</span>
+      </div>
+
+      <div class="ecg-container">
+        <div class="ecg-header">
+          <span>DERIVACIÓN II — ECG EN VIVO</span>
+          <span class="mono" id="ecgStatus">RITMO SINUSAL NORMAL</span>
+        </div>
+        <canvas id="ecgCanvas" width="680" height="56"></canvas>
+      </div>
+
+      <div class="vitals-grid">
+        <div class="vital-card" id="cardHr">
+          <div class="vital-top"><span class="vital-name">FRECUENCIA CARDÍACA</span><span class="vital-range" id="rangeHr">50–95</span></div>
+          <div class="vital-value mono"><span id="valHr">61</span> <small>lpm</small></div>
+        </div>
+        <div class="vital-card" id="cardBp">
+          <div class="vital-top"><span class="vital-name">PRESIÓN ARTERIAL</span><span class="vital-range" id="rangeBp">100–135</span></div>
+          <div class="vital-value mono"><span id="valBp">114/73</span> <small>mmHg</small></div>
+        </div>
+        <div class="vital-card" id="cardSpo2">
+          <div class="vital-top"><span class="vital-name">SATURACIÓN SpO₂</span><span class="vital-range">94–100%</span></div>
+          <div class="vital-value mono"><span id="valSpo2">98</span> <small>%</small></div>
+        </div>
+        <div class="vital-card" id="cardTemp">
+          <div class="vital-top"><span class="vital-name">TEMP. CENTRAL</span><span class="vital-range" id="rangeTemp">36.4–37.8</span></div>
+          <div class="vital-value mono"><span id="valTemp">37.1</span> <small>°C</small></div>
+        </div>
+        <div class="vital-card" id="cardRr">
+          <div class="vital-top"><span class="vital-name">FREC. RESPIRATORIA</span><span class="vital-range" id="rangeRr">11–20</span></div>
+          <div class="vital-value mono"><span id="valRr">15</span> <small>rpm</small></div>
+        </div>
+        <div class="vital-card" id="cardSans">
+          <div class="vital-top"><span class="vital-name">RIESGO SANS (EST.)</span><span class="vital-range">&lt; 21 mmHg</span></div>
+          <div class="vital-value mono"><span id="valIop">17.5</span> <small>mmHg</small></div>
+        </div>
+        <div class="vital-card" id="cardMuscle">
+          <div class="vital-top"><span class="vital-name">MASA MUSCULAR</span><span class="vital-range">&gt; -5.0%</span></div>
+          <div class="vital-value mono"><span id="valMuscle">-2.1</span> <small>%</small></div>
+        </div>
+        <div class="vital-card" id="cardBone">
+          <div class="vital-top"><span class="vital-name">DENSIDAD ÓSEA (DMO)</span><span class="vital-range">&gt; -3.0%</span></div>
+          <div class="vital-value mono"><span id="valBone">-1.4</span> <small>%</small></div>
+        </div>
+        <div class="vital-card" id="cardSleep">
+          <div class="vital-top"><span class="vital-name">SUEÑO (ACTIGRAFÍA)</span><span class="vital-range">Meta: 7.5h</span></div>
+          <div class="vital-value mono"><span id="valSleepLast">7.4</span> <small>h</small> · <span id="valSleepAvg" class="vital-accent">7.3</span><small>h(7d)</small></div>
+        </div>
+        <div class="vital-card" id="cardRad">
+          <div class="vital-top"><span class="vital-name">DOSIMETRÍA</span><span class="vital-range">&lt; 600mSv</span></div>
+          <div class="vital-value mono"><span id="valRadRate">24.5</span> <small>µSv/h</small></div>
+        </div>
+      </div>
+
+      <div class="trend-section">
+        <div class="trend-header">
+          <span class="trend-title">TENDENCIAS FISIOLÓGICAS</span>
+          <div class="trend-tabs">
+            <button class="trend-tab active" data-chart="mission">Misión (180d)</button>
+            <button class="trend-tab" data-chart="daily">24h</button>
+            <button class="trend-tab" data-chart="sleep">Sueño</button>
+          </div>
+        </div>
+        <div class="trend-canvas-wrap">
+          <canvas id="trendCanvas" width="720" height="110"></canvas>
+        </div>
+        <div class="trend-legend" id="trendLegend"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>DIAGNÓSTICO & PROTOCOLO AUTÓNOMO</h2>
+        <span class="badge ok-badge" id="isaStateBadge">NORMALIZADO</span>
+      </div>
+
+      <div class="diag-box nominal" id="diagBox">
+        <div class="diag-classification" id="diagTitle">ESTADO NOMINAL EN ÓRBITA (0g)</div>
+        <p class="diag-desc" id="diagDesc">Parámetros fisiológicos coherentes con reposo en microgravedad.</p>
+        <div class="ack-bar" id="ackBar" style="display:none;">
+          <span class="ack-info" id="ackInfo">Alarma pendiente de reconocimiento.</span>
+          <button class="ack-btn" id="ackBtn">ACK</button>
+        </div>
+        <div id="diagAction"></div>
+      </div>
+
+      <div class="panel-header sub">
+        <h2>BITÁCORA DE EVENTOS EN VIVO</h2>
+      </div>
+      <div class="log-list" id="eventLog"></div>
+    </section>
+  </main>
+
+  <!-- =========================================================
+       PESTAÑA 2: SALUD MENTAL Y EVALUACIÓN PERIÓDICA (10 DÍAS)
+       ========================================================= -->
+  <main class="mental-grid" id="viewMental" style="display:none;">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>CUESTIONARIO PSICOLÓGICO — <span id="mentalCrewName" class="crew-name-strong">CMDR. V. ROSSI</span></h2>
+        <span class="badge ok-badge" id="psychDueBadge">EVALUACIÓN AL DÍA</span>
+      </div>
+
+      <div class="psych-status-banner" id="psychBanner">
+        <div>
+          <strong id="psychBannerTitle">✓ SEGUIMIENTO PSICOLÓGICO AL DÍA</strong>
+          <p id="psychBannerDesc" style="font-size:0.72rem;margin-top:2px;">Próxima evaluación obligatoria programada para el Día 40.</p>
+        </div>
+        <div class="mono" style="text-align:right;font-size:0.72rem;">
+          <div>Última: <strong id="lastTestDay">Día 30</strong></div>
+          <div>Próxima: <strong id="nextTestDay">Día 40</strong></div>
+        </div>
+      </div>
+
+      <form class="psych-form" id="psychForm">
+        <div class="psych-question">
+          <label for="qMood">1. Estado de ánimo general y motivación:</label>
+          <select id="qMood">
+            <option value="5">5 — Excelente: ánimo alto y motivado</option>
+            <option value="4" selected>4 — Bueno: estable, sin variaciones</option>
+            <option value="3">3 — Regular: leve apatía u ocasional</option>
+            <option value="2">2 — Bajo: desmotivación frecuente</option>
+            <option value="1">1 — Crítico: ánimo deprimido</option>
+          </select>
+        </div>
+
+        <div class="psych-question">
+          <label for="qStress">2. Nivel de estrés y sobrecarga operativa:</label>
+          <select id="qStress">
+            <option value="5">5 — Muy bajo: control total</option>
+            <option value="4" selected>4 — Bajo: presión normal</option>
+            <option value="3">3 — Moderado: tensión puntual</option>
+            <option value="2">2 — Alto: sensación de saturación</option>
+            <option value="1">1 — Muy alto: estrés agudo</option>
+          </select>
+        </div>
+
+        <div class="psych-question">
+          <label for="qFocus">3. Concentración cognitiva y fatiga:</label>
+          <select id="qFocus">
+            <option value="5">5 — Óptima: alerta máxima</option>
+            <option value="4" selected>4 — Buena: adecuada</option>
+            <option value="3">3 — Leve fatiga</option>
+            <option value="2">2 — Baja concentración</option>
+            <option value="1">1 — Fatiga severa</option>
+          </select>
+        </div>
+
+        <div class="psych-question">
+          <label for="qCohesion">4. Cohesión con la tripulación:</label>
+          <select id="qCohesion">
+            <option value="5" selected>5 — Excelente apoyo mutuo</option>
+            <option value="4">4 — Buena relación</option>
+            <option value="3">3 — Neutra</option>
+            <option value="2">2 — Tensa</option>
+            <option value="1">1 — Conflictiva</option>
+          </select>
+        </div>
+
+        <div class="psych-question">
+          <label for="qNotes">5. Observaciones subjetivas:</label>
+          <input type="text" id="qNotes" placeholder="Ej. Buen contacto familiar..." />
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="hint" id="mentalSleepContext" style="margin:0;">Sueño prom. 7.3 h/d</span>
+          <button type="submit" class="primary-btn">Registrar Evaluación</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>ÍNDICE DE BIENESTAR & HISTORIAL</h2>
+        <span class="badge" id="psychScoreDisplay">84/100</span>
+      </div>
+
+      <div class="sleep-kpis">
+        <div class="vital-card" id="cardMentalIndex">
+          <div class="vital-top"><span class="vital-name">ÍNDICE BIENESTAR</span><span class="vital-range">Meta &gt; 75</span></div>
+          <div class="vital-value mono"><span id="valMentalIndex">84</span> <small>/100</small></div>
+        </div>
+        <div class="vital-card" id="cardMentalSleep">
+          <div class="vital-top"><span class="vital-name">SUEÑO (7 DÍAS)</span><span class="vital-range">Meta: 7.5h</span></div>
+          <div class="vital-value mono"><span id="valMentalSleepAvg">7.3</span> <small>h/d</small></div>
+        </div>
+      </div>
+
+      <div class="panel-header sub">
+        <h2>HISTORIAL PERIÓDICO</h2>
+      </div>
+      <div class="log-list" id="psychHistoryList" style="max-height:220px;"></div>
+    </section>
+  </main>
+
+  <!-- =========================================================
+       PESTAÑA 3: ECO-DOPPLER VASCULAR DE CADA TRIPULANTE
+       ========================================================= -->
+  <main class="doppler-view" id="viewDoppler" style="display:none;">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>MONITOR ECO-DOPPLER VASCULAR & RETORNO VENOSO</h2>
+          <p class="subtitle" style="margin-top:1px;">Vena Yugular Interna (VYI) y Arteria Carótida Común (ACC)</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="badge" id="dopplerEnvBadge">ÓRBITA (0g) — VENA YUGULAR</span>
+          <select id="dopplerVesselSelect" class="sidebar-select" aria-label="Seleccionar vaso sanguíneo">
+            <option value="jugular">Vena Yugular Interna (Estasis)</option>
+            <option value="carotid">Arteria Carótida Común (Flujo)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="doppler-crew-grid" id="dopplerCrewGrid">
+        <article class="doppler-card" id="dopplerCard0">
+          <div class="doppler-card-header">
+            <div>
+              <strong id="dopplerName0">Cmdr. V. Rossi (AST-01)</strong>
+              <span class="doppler-sub" id="dopplerMode0">Destiny · Reposo</span>
+            </div>
+            <span class="badge ok-badge" id="dopplerBadge0">FLUJO NOMINAL</span>
+          </div>
+          <div class="doppler-screen">
+            <div class="doppler-overlay-top mono"><span>PW 7.5 MHz</span><span id="dopplerAngle0">60° · 4.2 kHz</span></div>
+            <canvas id="dopplerCanvas0" width="400" height="110"></canvas>
+            <div class="doppler-overlay-bottom mono"><span id="dopplerFlowDir0">DIR: ANTERÓGRADO</span><span id="dopplerWaveType0">MONOFÁSICA</span></div>
+          </div>
+          <div class="doppler-metrics-grid">
+            <div class="d-metric"><span>PSV</span><strong class="mono" id="dopplerPsv0">28.4 cm/s</strong></div>
+            <div class="d-metric"><span>DIÁMETRO</span><strong class="mono" id="dopplerDiam0">11.2 mm</strong></div>
+            <div class="d-metric"><span>IR</span><strong class="mono" id="dopplerRi0">0.64</strong></div>
+            <div class="d-metric"><span>ESTASIS</span><strong class="mono" id="dopplerStasis0">GRADO 1</strong></div>
+          </div>
+          <div class="doppler-finding" id="dopplerFinding0">Ingurgitación yugular leve por 0g con drenaje conservado.</div>
+        </article>
+
+        <article class="doppler-card" id="dopplerCard1">
+          <div class="doppler-card-header">
+            <div>
+              <strong id="dopplerName1">Ing. M. Alvarez (AST-02)</strong>
+              <span class="doppler-sub" id="dopplerMode1">Destiny · ARED</span>
+            </div>
+            <span class="badge ok-badge" id="dopplerBadge1">FLUJO NOMINAL</span>
+          </div>
+          <div class="doppler-screen">
+            <div class="doppler-overlay-top mono"><span>PW 7.5 MHz</span><span id="dopplerAngle1">60° · 5.8 kHz</span></div>
+            <canvas id="dopplerCanvas1" width="400" height="110"></canvas>
+            <div class="doppler-overlay-bottom mono"><span id="dopplerFlowDir1">DIR: ANTERÓGRADO</span><span id="dopplerWaveType1">HIPERDINÁMICA</span></div>
+          </div>
+          <div class="doppler-metrics-grid">
+            <div class="d-metric"><span>PSV</span><strong class="mono" id="dopplerPsv1">44.2 cm/s</strong></div>
+            <div class="d-metric"><span>DIÁMETRO</span><strong class="mono" id="dopplerDiam1">10.4 mm</strong></div>
+            <div class="d-metric"><span>IR</span><strong class="mono" id="dopplerRi1">0.61</strong></div>
+            <div class="d-metric"><span>ESTASIS</span><strong class="mono" id="dopplerStasis1">GRADO 0</strong></div>
+          </div>
+          <div class="doppler-finding" id="dopplerFinding1">Retorno venoso activo por ejercicio ARED.</div>
+        </article>
+
+        <article class="doppler-card" id="dopplerCard2">
+          <div class="doppler-card-header">
+            <div>
+              <strong id="dopplerName2">Esp. K. Tanaka (AST-03)</strong>
+              <span class="doppler-sub" id="dopplerMode2">Quest · Reposo</span>
+            </div>
+            <span class="badge ok-badge" id="dopplerBadge2">FLUJO NOMINAL</span>
+          </div>
+          <div class="doppler-screen">
+            <div class="doppler-overlay-top mono"><span>PW 7.5 MHz</span><span id="dopplerAngle2">60° · 4.2 kHz</span></div>
+            <canvas id="dopplerCanvas2" width="400" height="110"></canvas>
+            <div class="doppler-overlay-bottom mono"><span id="dopplerFlowDir2">DIR: ANTERÓGRADO</span><span id="dopplerWaveType2">MONOFÁSICA</span></div>
+          </div>
+          <div class="doppler-metrics-grid">
+            <div class="d-metric"><span>PSV</span><strong class="mono" id="dopplerPsv2">24.8 cm/s</strong></div>
+            <div class="d-metric"><span>DIÁMETRO</span><strong class="mono" id="dopplerDiam2">12.1 mm</strong></div>
+            <div class="d-metric"><span>IR</span><strong class="mono" id="dopplerRi2">0.67</strong></div>
+            <div class="d-metric"><span>ESTASIS</span><strong class="mono" id="dopplerStasis2">GRADO 1</strong></div>
+          </div>
+          <div class="doppler-finding" id="dopplerFinding2">Distensión venosa moderada; recomendable sesión LBNP.</div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- =========================================================
+       PESTAÑA 4: IA CLÍNICA (MODELO LOCAL, SIN CONEXIÓN)
+       ========================================================= -->
+  <main class="ai-grid" id="viewAI" style="display:none;">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>IA CLÍNICA — <span id="aiCrewName" class="crew-name-strong"></span></h2>
+        <span class="badge">MODELO LOCAL · SIN CONEXIÓN</span>
+      </div>
+
+      <div class="ai-top">
+        <div class="ai-card ai-gauge-card">
+          <span class="ai-card-title">RIESGO PREDICHO (PRÓXIMAS 48 H)</span>
+          <canvas id="aiGauge"></canvas>
+          <span class="ai-risk-label" id="aiRiskLabel">—</span>
+        </div>
+        <div class="ai-card ai-fit-card" id="aiFitCard">
+          <span class="ai-card-title">APTITUD PARA TAREAS CRÍTICAS</span>
+          <div class="ai-fit-value" id="aiFitValue">—</div>
+          <ul class="ai-fit-reasons" id="aiFitReasons"></ul>
+        </div>
+        <div class="ai-card ai-learn-card">
+          <span class="ai-card-title">LÍNEA BASE PERSONAL</span>
+          <div class="ai-learn-value mono" id="aiSamples">0</div>
+          <span class="ai-learn-sub">muestras aprendidas</span>
+          <div class="ai-learn-bar"><div id="aiLearnFill"></div></div>
+          <span class="ai-learn-sub" id="aiLearnState">Calibrando…</span>
+        </div>
+      </div>
+
+      <div class="panel-header sub">
+        <h2>DETECCIÓN DE ANOMALÍAS · DESVÍO RESPECTO A SU PROPIA LÍNEA BASE</h2>
+        <span class="badge ok-badge" id="aiAnomalyCount">SIN ANOMALÍAS</span>
+      </div>
+      <div class="ai-anomaly-list" id="aiAnomalyList"></div>
+
+      <div class="panel-header sub">
+        <h2>PREDICCIONES</h2>
+      </div>
+      <div class="ai-pred-grid" id="aiPredGrid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>ASISTENTE CLÍNICO DE A BORDO</h2>
+        <span class="badge ok-badge">SIN DEPENDER DE LA TIERRA</span>
+      </div>
+      <div class="ai-chat" id="aiChat"></div>
+      <div class="ai-questions" id="aiQuestions"></div>
+
+      <div class="panel-header sub">
+        <h2>PRIORIDAD DE ATENCIÓN · TRIPULACIÓN</h2>
+      </div>
+      <div class="ai-ranking" id="aiRanking"></div>
+      <p class="ai-method">
+        <b>Cómo funciona:</b> aprende la línea base de cada tripulante (media y desviación móviles por actividad),
+        detecta desvíos con puntuación Z ≥ 3σ, proyecta tendencias con regresión lineal y recomienda acciones con reglas
+        clínicas de los protocolos del SCADA. Todo se calcula en este equipo, sin conexión con la Tierra.
+      </p>
+    </section>
+  </main>
+
+  <!-- =========================================================
+       PESTAÑA 5: ENLACE CON LA TIERRA (RETARDO DE COMUNICACIÓN)
+       ========================================================= -->
+  <main class="link-grid" id="viewLink" style="display:none;">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>ENLACE NAVE ↔ TIERRA (CONTROL DE MISIÓN · HOUSTON)</h2>
+        <span class="badge ok-badge" id="linkStatusBadge">ENLACE ACTIVO</span>
+      </div>
+
+      <div class="link-controls">
+        <div class="link-control">
+          <span class="link-label">UBICACIÓN DE LA NAVE</span>
+          <div class="link-seg" id="linkDestSeg">
+            <button type="button" data-dest="iss">Órbita (ISS)</button>
+            <button type="button" data-dest="moon">Luna</button>
+            <button type="button" data-dest="mars">Marte</button>
+          </div>
+        </div>
+        <div class="link-control" id="linkDistControl">
+          <span class="link-label">DISTANCIA TIERRA–MARTE: <b id="linkDistLabel" class="mono">225 M km</b></span>
+          <input type="range" id="linkDistRange" min="55" max="401" step="1" value="225" />
+          <div class="link-range-ends"><span>55 M km (más cerca)</span><span>401 M km (más lejos)</span></div>
+        </div>
+        <div class="link-control">
+          <span class="link-label">VELOCIDAD DE LA DEMO</span>
+          <div class="link-seg" id="linkSpeedSeg">
+            <button type="button" data-speed="1">Tiempo real</button>
+            <button type="button" data-speed="10">×10</button>
+            <button type="button" data-speed="60">×60</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="link-stats">
+        <div class="link-stat"><span>DISTANCIA</span><strong class="mono" id="linkStatDist">—</strong></div>
+        <div class="link-stat"><span>RETARDO (SOLO IDA)</span><strong class="mono" id="linkStatOneWay">—</strong></div>
+        <div class="link-stat"><span>IDA Y VUELTA</span><strong class="mono" id="linkStatRound">—</strong></div>
+        <div class="link-stat"><span>ANCHO DE BANDA</span><strong class="mono" id="linkStatBw">—</strong></div>
+      </div>
+
+      <div class="link-diagram">
+        <canvas id="linkCanvas"></canvas>
+      </div>
+
+      <div class="panel-header sub">
+        <h2>TIEMPO DE RESPUESTA ANTE UNA EMERGENCIA</h2>
+      </div>
+      <div class="link-compare" id="linkCompare"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>MENSAJES CON LA TIERRA</h2>
+        <span class="badge" id="linkQueueBadge">0 EN TRÁNSITO</span>
+      </div>
+
+      <div class="link-messages" id="linkMessages"></div>
+
+      <form class="link-compose" id="linkCompose" autocomplete="off">
+        <div class="link-compose-row">
+          <select id="linkMsgType" class="sidebar-select">
+            <option value="reporte">Reporte médico a Houston</option>
+            <option value="consulta">Consulta a Houston</option>
+            <option value="familia">Mensaje a la familia</option>
+          </select>
+          <select id="linkMsgCrew" class="sidebar-select"></select>
+        </div>
+        <div class="link-compose-row">
+          <input type="text" id="linkMsgText" maxlength="160" placeholder="Escribe el mensaje…" />
+          <button type="submit" class="primary-btn">Enviar ▶</button>
+        </div>
+        <p class="link-note">Las alarmas del SCADA se envían a Houston <b>automáticamente</b>. La respuesta siempre llega tarde: por eso la tripulación y la IA de a bordo deciden primero.</p>
+      </form>
+    </section>
+  </main>
+
+  <!-- =========================================================
+       PESTAÑA 6: MODELO ANATÓMICO (SISTEMAS AFECTADOS)
+       ========================================================= -->
+  <main class="body-grid" id="viewBody" style="display:none;">
+    <section class="panel body-panel">
+      <div class="panel-header">
+        <h2>MODELO ANATÓMICO — <span id="bodyCrewName" class="crew-name-strong"></span></h2>
+        <span class="badge" id="bodySummaryBadge">ESCANEANDO</span>
+      </div>
+      <div class="body-stage">
+        <div class="body-figure" id="bodyFigure"></div>
+        <div class="body-legend">
+          <span><i class="dot nominal"></i>Normal</span>
+          <span><i class="dot warning"></i>Advertencia</span>
+          <span><i class="dot critical"></i>Crítico</span>
+          <span class="body-hint">Toca un órgano o un sistema de la lista</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>SISTEMA SELECCIONADO</h2>
+        <span class="badge" id="bodyDetailBadge">—</span>
+      </div>
+      <div class="body-detail" id="bodyDetail"></div>
+
+      <div class="panel-header sub">
+        <h2>TODOS LOS SISTEMAS</h2>
+      </div>
+      <div class="body-list" id="bodyList"></div>
+
+      <div class="panel-header sub">
+        <h2>CONTRAMEDIDAS DEL TRIPULANTE</h2>
+        <span class="badge">DETECTAR → RECOMENDAR → ACTUAR</span>
+      </div>
+      <div class="cm-grid" id="bodyCmAll"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script src="link.js"></script>
+  <script src="countermeasures.js"></script>
+  <script src="body.js"></script>
+  <script src="sound.js"></script>
+  <script src="vest-link.js"></script>
+</body>
+</html>

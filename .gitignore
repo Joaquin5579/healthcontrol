@@ -1,0 +1,12 @@
+# Configuración local del editor y de herramientas
+.claude/
+.vscode/
+.idea/
+
+# Archivos del sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Copias comprimidas
+*.zip
