@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monitoreo de biomedicina en el espacio | LBDLN</title>
-  <link rel="icon" type="image/svg+xml" href="logo-lbdln.svg" />
   <link rel="icon" type="image/png" href="logo-lbdln.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -28,7 +27,7 @@
   <div class="login-screen" id="loginScreen">
     <div class="login-box">
       <div class="login-header">
-        <div class="status-dot"></div>
+        <img class="lbdln-logo lbdln-login" src="logo-lbdln.png" alt="LBDLN" />
         <div>
           <h1>SCADA BIOMÉDICO ORBITAL · REGISTRO DE TRIPULACIÓN</h1>
           <p class="subtitle">Cada tripulante debe iniciar sesión con su nombre, apellido y edad antes de comenzar la misión.</p>
@@ -45,7 +44,7 @@
   <!-- BARRA SUPERIOR COMPACTA -->
   <header class="topbar">
     <div class="brand">
-      <span class="brand-logo"><img src="logo-lbdln.png" alt="Logo LBDLN" onerror="this.onerror=null;this.src='logo-lbdln.svg'" /></span>
+      <span class="brand-logo"><img src="logo-lbdln.png" alt="Logo LBDLN" onerror="this.parentNode.style.display='none'" /></span>
       <div class="status-dot" id="systemLed" title="Estado General del Sistema"></div>
       <div>
         <h1>Monitoreo de biomedicina en el espacio</h1>
@@ -63,7 +62,7 @@
   <!-- MENÚ LATERAL DESPLEGABLE (SIDEBAR) -->
   <aside class="sidebar-menu" id="sidebarMenu">
     <div class="sidebar-header">
-      <h3>PANEL DE CONTROL</h3>
+      <h3 class="sidebar-title"><img class="lbdln-logo lbdln-mini" src="logo-lbdln.png" alt="LBDLN" /> PANEL DE CONTROL</h3>
       <button class="close-sidebar-btn" id="sidebarClose">✕</button>
     </div>
 

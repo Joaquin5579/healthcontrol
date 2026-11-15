@@ -175,7 +175,7 @@
       `<i style="left:${Math.random() * 100}%;top:${Math.random() * -100}%;animation-duration:${0.5 + Math.random() * 0.8}s"></i>`).join("");
     el.innerHTML = `
       <div class="anim-launch-stars">${stars}</div>
-      <div class="anim-launch-rocket">🚀</div>
+      <img class="lbdln-logo lbdln-launch" src="logo-lbdln.png" alt="LBDLN" /><div class="anim-launch-rocket">🚀</div>
       <div class="anim-launch-title">INICIANDO MISIÓN</div>
       <div class="anim-launch-sub">${esc(crew)}</div>
       <div class="anim-launch-bar"><i></i></div>`;

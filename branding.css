@@ -5,7 +5,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
 }
-.brand-logo img { width: 100%; height: 100%; object-fit: contain; transform: scale(1.12); }
+.brand-logo img { width: 100%; height: 100%; object-fit: contain; transform: none; }
 .team-badge {
   display: inline-block; margin-top: 3px; padding: 1px 8px;
   font-size: 0.68rem; font-weight: 700; letter-spacing: 0.4px;
@@ -13,3 +13,11 @@
   border-radius: 9999px; background: rgba(56, 189, 248, 0.3);
 }
 @media (max-width: 700px) { .brand-logo { width: 38px; height: 38px; } .team-badge { font-size: 0.52rem; } }
+.brand > div:last-child { min-width: 0; }
+.team-badge { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: top; }
+@media (max-width: 700px) { .brand h1 { font-size: 0.72rem; } .brand .subtitle { display: none; } .brand-logo { width: 44px; height: 44px; } }
+.lbdln-logo { border-radius: 9999px; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.45)); }
+.lbdln-login { width: 76px; height: 76px; flex: none; }
+.lbdln-mini { width: 26px; height: 26px; vertical-align: middle; margin-right: 6px; }
+.lbdln-launch { width: 150px; height: 150px; margin-bottom: 8px; animation: lbdlnPulse 1.6s ease-in-out infinite; }
+@keyframes lbdlnPulse { 50% { filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.9)); } }

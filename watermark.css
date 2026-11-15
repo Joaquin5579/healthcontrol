@@ -11,7 +11,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: url("logo-lbdln.png") center 55% / min(46vh, 42vw) no-repeat, url("logo-lbdln.svg") center 55% / min(46vh, 42vw) no-repeat;
+  background: url("logo-lbdln.png") center 55% / min(46vh, 42vw) no-repeat;
   opacity: 0.09;
   pointer-events: none;   /* no bloquea ningún clic */
   z-index: 3;
